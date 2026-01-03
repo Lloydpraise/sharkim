@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=AW-17577238441"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'AW-17577238441');
+  </script>
+  
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/png" href="images/icon%20logo.png">
+  <title>Checkout - Sharkim Traders</title>
+  
+  <script src="https://cdn.tailwindcss.com/"></script>
+  
+  <style>
+    /* Global Font & Body */
+    html, body { 
+        max-width: 100%; 
+        overflow-x: hidden; 
+        font-family: "Times New Roman", Times, serif, Arial, Helvetica, sans-serif; 
+        background-color: #f3f4f6; /* Matching index bg */
+    }
+    
+    /* Brand Colors */
+    .brand-orange { color: #ea580c; }
+    .bg-brand-orange { background-color: #ea580c; }
+    .brand-green { background-color: #25D366; }
+
+    /* Header Styling */
+    .header-bg { background-color: #f3f4f6; }
+
+    /* Animated Title Underline (From Index) */
+    .title-underline {
+      position: relative;
+      display: inline-block;
+      padding-bottom: 8px;
+    }
+    .title-underline::after {
+      content: '';
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: -8px;
+      width: 80px;
+      height: 4px;
+      border-radius: 6px;
+      background: linear-gradient(90deg, #ac8334, #f59e0b, #ac8334);
+      background-size: 200% 100%;
+      animation: gradientMove 3s linear infinite;
+    }
+    @keyframes gradientMove { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+
+    /* Form & Card Styling */
+    .step-number {
+        background-color: #ea580c; 
+        color: white;
+    }
+    
+    /* Delivery Option Selected State */
+    .delivery-option.selected {
+        border-color: #ea580c;
+        background-color: #fff7ed; /* orange-50 */
+        position: relative;
+    }
+    .delivery-option.selected::after {
+        content: '✔';
+        position: absolute;
+        top: -8px;
+        right: -8px;
+        background: #ea580c;
+        color: white;
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 10px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    /* Modal Animation */
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    .animate-fade-in { animation: fadeIn 0.3s ease-out; }
+  </style>
+</head>
+
+<body class="min-h-screen flex flex-col text-gray-800">
+
+<header class="header-bg py-4 shadow-sm sticky top-0 z-40">
+  <div class="max-w-5xl mx-auto px-4 flex items-center justify-between relative">
+    <a href="index.html" class="flex-shrink-0">
+      <img src="images/sharkim_gold_logo.png" alt="Sharkim Logo" class="h-12 md:h-16 object-contain">
+    </a>
+    
+    <div class="absolute left-1/2 transform -translate-x-1/2">
+        <h1 class="text-2xl md:text-3xl font-bold text-gray-800"><span class="title-underline">Checkout</span></h1>
+    </div>
+    
+    <div class="w-12"></div>
+  </div>
+</header>
+
+<main class="flex-grow max-w-5xl mx-auto w-full px-4 py-8 space-y-6">
+
+    <div class="grid grid-cols-1 md:grid-cols-12 gap-8">
+        
+        <div class="md:col-span-7 space-y-6">
+            
+            <section class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
+                <h2 class="text-lg font-bold text-gray-800 mb-4 border-b pb-2">Products Ordered</h2>
+                <div id="checkoutItemsList" class="space-y-4">
+                    </div>
+            </section>
+
+            <section class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
+                <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                    <span class="step-number w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold">1</span>
+                    Contact Information
+                </h2>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">Full Name</label>
+                        <input type="text" id="custName" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:border-[#ea580c] bg-gray-50 focus:bg-white transition" placeholder="John Doe">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">Phone Number</label>
+                        <input type="tel" id="custPhone" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:border-[#ea580c] bg-gray-50 focus:bg-white transition" placeholder="07...">
+                    </div>
+                </div>
+            </section>
+
+            <section class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
+                <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                    <span class="step-number w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold">2</span>
+                    Shipping Information
+                </h2>
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">Delivery Location / Landmark</label>
+                    <input type="text" id="custLocation" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:border-[#ea580c] bg-gray-50 focus:bg-white transition" placeholder="e.g., Juja City Mall, Kiambu">
+                </div>
+            </section>
+
+            <section class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
+                <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                    <span class="step-number w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold">3</span>
+                    Delivery Method
+                </h2>
+                <div class="grid grid-cols-2 gap-3">
+                    
+                    <button onclick="selectDelivery(150, 'Pickup Point', this)" class="delivery-option p-3 border-2 border-gray-100 rounded-xl text-left hover:border-gray-300 transition group flex flex-col justify-between h-full">
+                        <div>
+                            <div class="font-bold text-sm text-gray-800">PickUp Point</div>
+                            <div class="text-xs text-gray-500 mt-1">CBD Office</div>
+                        </div>
+                        <div class="mt-2 font-bold text-[#ea580c] text-sm">Ksh 150</div>
+                    </button>
+
+                    <button onclick="selectDelivery(250, 'Rider Delivery', this)" class="delivery-option p-3 border-2 border-gray-100 rounded-xl text-left hover:border-gray-300 transition group flex flex-col justify-between h-full">
+                        <div>
+                            <div class="font-bold text-sm text-gray-800">Rider</div>
+                            <div class="text-xs text-gray-500 mt-1">Nairobi Environs</div>
+                        </div>
+                        <div class="mt-2 font-bold text-[#ea580c] text-sm">Ksh 250</div>
+                    </button>
+
+                    <button onclick="selectDelivery(500, 'Door Step', this)" class="delivery-option p-3 border-2 border-gray-100 rounded-xl text-left hover:border-gray-300 transition group flex flex-col justify-between h-full">
+                        <div>
+                            <div class="font-bold text-sm text-gray-800">Door Step</div>
+                            <div class="text-xs text-gray-500 mt-1">Home/Office</div>
+                        </div>
+                        <div class="mt-2 font-bold text-[#ea580c] text-sm">Ksh 500</div>
+                    </button>
+
+                    <button onclick="selectDelivery(300, 'Outside Nairobi', this)" class="delivery-option p-3 border-2 border-gray-100 rounded-xl text-left hover:border-gray-300 transition group flex flex-col justify-between h-full">
+                        <div>
+                            <div class="font-bold text-sm text-gray-800">Out of Nairobi</div>
+                            <div class="text-xs text-gray-500 mt-1">Courier/Parcel</div>
+                        </div>
+                        <div class="mt-2 font-bold text-[#ea580c] text-sm">Ksh 300</div>
+                    </button>
+
+                </div>
+            </section>
+        </div>
+
+        <div class="md:col-span-5 space-y-6">
+            <div class="bg-white p-6 rounded-xl shadow-lg border border-gray-200 sticky top-24">
+                <h2 class="text-xl font-bold text-gray-800 mb-6 border-b pb-4">Order Summary</h2>
+
+                <div class="space-y-3 text-sm">
+                    <div class="flex justify-between text-gray-600">
+                        <span>Items Subtotal</span>
+                        <span class="font-bold text-gray-800">Ksh <span id="summarySubtotal">0</span></span>
+                    </div>
+                    <div class="flex justify-between text-gray-600">
+                        <span>Delivery Fee</span>
+                        <span class="font-bold text-gray-800">Ksh <span id="summaryShipping">0</span></span>
+                    </div>
+                    <div id="summarySavings" class="hidden flex justify-between text-green-600 font-bold bg-green-50 p-2 rounded">
+                        <span>Discount Savings</span>
+                        <span>- Ksh <span id="savingsValue">0</span></span>
+                    </div>
+                </div>
+
+                <div class="flex justify-between items-center border-t border-dashed border-gray-300 mt-4 pt-4 mb-6">
+                    <span class="text-lg font-bold text-gray-800">Total Payable</span>
+                    <span class="text-3xl font-extrabold text-[#ea580c]">Ksh <span id="summaryTotal">0</span></span>
+                </div>
+                
+                <div class="space-y-4">
+                    <button onclick="processPayment()" class="w-full py-4 bg-[#ea580c] hover:bg-orange-700 text-white rounded-xl font-bold shadow-md transition flex items-center justify-center gap-2 group">
+                        <span>Continue to Payment</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+                    </button>
+
+                    <button onclick="processWhatsAppCheckout()" class="w-full py-4 bg-[#25D366] hover:bg-green-600 text-white rounded-xl font-bold shadow-md transition flex items-center justify-center gap-2">
+                        <svg class="w-6 h-6 fill-current" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+                        Complete on WhatsApp
+                    </button>
+                    
+                    <div class="flex items-center justify-center gap-2 mt-4 opacity-70">
+                        <img src="images/mpesa1.png" class="h-6" alt="Mpesa">
+                        <img src="images/equity.png" class="h-6" alt="Equity">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="space-y-3 pt-4">
+                <details class="bg-white rounded-lg shadow-sm border border-gray-100 group">
+                    <summary class="flex justify-between items-center p-3 cursor-pointer font-semibold text-sm text-gray-700 hover:text-[#ea580c] transition">
+                        <span>Shipping and Delivery Policy</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-400 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                    </summary>
+                    <div class="px-3 pb-3 text-gray-500 text-xs leading-relaxed border-t mt-2 pt-2">
+                        Orders within Nairobi are delivered via riders or door-step delivery services typically within 24 hours. Orders outside Nairobi are dispatched via trusted courier partners (Wells Fargo, G4S, or PSV parcels). Pickup options available at CBD.
+                    </div>
+                </details>
+
+                <details class="bg-white rounded-lg shadow-sm border border-gray-100 group">
+                    <summary class="flex justify-between items-center p-3 cursor-pointer font-semibold text-sm text-gray-700 hover:text-[#ea580c] transition">
+                        <span>Returns and Refunds</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-400 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                    </summary>
+                    <div class="px-3 pb-3 text-gray-500 text-xs leading-relaxed border-t mt-2 pt-2">
+                        We accept returns for items with manufacturing defects within 48 hours. Items must be unused and in original packaging. Refunds processed within 5 business days.
+                    </div>
+                </details>
+            </div>
+        </div>
+    </div>
+</main>
+
+<div id="authModal" class="fixed inset-0 z-50 hidden flex items-center justify-center animate-fade-in">
+    <div class="absolute inset-0 bg-black bg-opacity-70 backdrop-blur-sm"></div>
+    <div class="bg-white w-11/12 max-w-md p-8 rounded-2xl shadow-2xl relative z-10 text-center">
+        
+        <h2 class="text-2xl font-bold text-gray-800 mb-2">Create an account with us</h2>
+        <p class="text-gray-500 mb-6 text-sm">Enter your details to speed up checkout.</p>
+        
+        <div class="space-y-4 text-left">
+            <div>
+                <label class="block text-sm font-bold text-gray-700 ml-1 mb-1">Name</label>
+                <input type="text" id="modalName" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:border-[#ea580c] focus:outline-none transition" placeholder="Your Name">
+            </div>
+            <div>
+                <label class="block text-sm font-bold text-gray-700 ml-1 mb-1">Phone Number</label>
+                <input type="tel" id="modalPhone" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:border-[#ea580c] focus:outline-none transition" placeholder="07...">
+                <p class="text-xs text-gray-400 mt-1 ml-1">We'll use this for order updates.</p>
+            </div>
+        </div>
+
+        <div class="flex items-center justify-between mt-8">
+            <button onclick="skipLogin()" class="text-gray-400 text-sm hover:text-gray-600 transition font-medium px-2">
+                Skip for now
+            </button>
+            <button onclick="handleLogin()" class="px-8 py-3 bg-[#ea580c] hover:bg-orange-700 text-white font-bold rounded-lg shadow-md transition transform active:scale-95">
+                Sign Up / Login
+            </button>
+        </div>
+    </div>
+</div>
+
+<footer class="bg-black text-[#ac8334] text-center py-6 mt-12 border-t border-gray-800">
+    <p class="text-sm">&copy; 2025 Sharkim Traders. All rights reserved.</p>
+</footer>
+
+<script>
+// ==========================
+// 1. DATA INITIALIZATION
+// ==========================
+let cart = JSON.parse(localStorage.getItem('cart') || '[]');
+let shippingCost = 0;
+let shippingMethod = '';
+let checkoutSessionId = null;
+
+const _params = new URLSearchParams(window.location.search);
+const _sessionParam = _params.get('cart') || _params.get('session');
+if((!cart || cart.length === 0) && _sessionParam) {
+    const sessions = JSON.parse(localStorage.getItem('checkout_sessions') || '{}');
+    const sess = sessions[_sessionParam];
+    if(sess && Array.isArray(sess.cart) && sess.cart.length > 0) {
+        cart = sess.cart;
+        shippingCost = sess.shippingCost || 0;
+        shippingMethod = sess.shippingMethod || '';
+        checkoutSessionId = _sessionParam;
+        localStorage.setItem('cart', JSON.stringify(cart));
+    }
+}
+
+if(!cart || cart.length === 0) {
+    alert("Your cart is empty. Redirecting to shop.");
+    window.location.href = 'shop.html';
+}
+
+// ==========================
+// 2. AUTH MODAL LOGIC
+// ==========================
+const authModal = document.getElementById('authModal');
+const userKey = 'sharkim_user';
+const savedUser = JSON.parse(localStorage.getItem(userKey));
+
+if (!savedUser) {
+    authModal.classList.remove('hidden');
+} else {
+    document.getElementById('custName').value = savedUser.name || '';
+    document.getElementById('custPhone').value = savedUser.phone || '';
+}
+
+function handleLogin() {
+    const name = document.getElementById('modalName').value.trim();
+    const phone = document.getElementById('modalPhone').value.trim();
+
+    if (!name || !phone) {
+        alert("Please enter both Name and Phone Number.");
+        return;
+    }
+
+    const user = { name, phone };
+    localStorage.setItem(userKey, JSON.stringify(user));
+
+    try {
+        if (checkoutSessionId) {
+            const sessions = JSON.parse(localStorage.getItem('checkout_sessions') || '{}');
+            sessions[checkoutSessionId] = sessions[checkoutSessionId] || {};
+            sessions[checkoutSessionId].user = user;
+            sessions[checkoutSessionId].updatedAt = Date.now();
+            localStorage.setItem('checkout_sessions', JSON.stringify(sessions));
+        }
+    } catch(e) {}
+
+    document.getElementById('custName').value = name;
+    document.getElementById('custPhone').value = phone;
+    authModal.classList.add('hidden');
+}
+
+function skipLogin() {
+    authModal.classList.add('hidden');
+}
+
+// ==========================
+// 3. CART RENDERING
+// ==========================
+function renderCheckoutItems() {
+    const container = document.getElementById('checkoutItemsList');
+    let subtotal = 0;
+    let totalSavings = 0;
+    
+    container.innerHTML = '';
+
+    cart.forEach(item => {
+        const qty = item.qty || 1;
+        const price = Number(item.price);
+        const origPrice = Number(item.original_price) || 0;
+        
+        subtotal += price * qty;
+        if(origPrice > price) {
+            totalSavings += (origPrice - price) * qty;
+        }
+
+        const row = document.createElement('div');
+        // Card Style Matching Cart Drawer (Image Left, Details Right)
+        row.className = 'flex gap-3 items-start border-b border-gray-50 last:border-0 pb-3 last:pb-0';
+        row.innerHTML = `
+            <div class="relative w-20 h-20 border border-gray-200 rounded-lg bg-white flex-shrink-0 overflow-hidden">
+                <img src="${item.image_url}" class="w-full h-full object-contain" alt="${item.title}">
+                <span class="absolute top-0 right-0 bg-[#ea580c] text-white text-[10px] font-bold px-1.5 py-0.5 rounded-bl">x${qty}</span>
+            </div>
+            <div class="flex-1 min-w-0 flex flex-col justify-between h-20 py-1">
+                <p class="text-sm font-bold text-gray-800 line-clamp-2 leading-tight">${item.title}</p>
+                <div>
+                    ${origPrice > price ? `<span class="text-xs text-gray-400 line-through mr-2">Ksh ${origPrice.toLocaleString()}</span>` : ''}
+                    <span class="font-bold text-[#ea580c] text-sm">Ksh ${price.toLocaleString()}</span>
+                </div>
+            </div>
+            <div class="font-bold text-sm text-gray-800 self-end">
+                Ksh ${(price * qty).toLocaleString()}
+            </div>
+        `;
+        container.appendChild(row);
+    });
+
+    document.getElementById('summarySubtotal').innerText = subtotal.toLocaleString();
+    
+    if(totalSavings > 0){
+        document.getElementById('summarySavings').classList.remove('hidden');
+        document.getElementById('savingsValue').innerText = totalSavings.toLocaleString();
+    }
+    
+    updateTotal(subtotal);
+}
+
+// ==========================
+// 4. SHIPPING LOGIC
+// ==========================
+function selectDelivery(cost, name, btnElement) {
+    shippingCost = cost;
+    shippingMethod = name;
+
+    document.querySelectorAll('.delivery-option').forEach(btn => {
+        btn.classList.remove('selected');
+    });
+    btnElement.classList.add('selected');
+
+    document.getElementById('summaryShipping').innerText = cost.toLocaleString();
+    
+    let subtotal = 0;
+    cart.forEach(item => subtotal += (Number(item.price) * (item.qty || 1)));
+    updateTotal(subtotal);
+
+    try {
+        if (checkoutSessionId) {
+            const sessions = JSON.parse(localStorage.getItem('checkout_sessions') || '{}');
+            sessions[checkoutSessionId] = sessions[checkoutSessionId] || {};
+            sessions[checkoutSessionId].shippingCost = shippingCost;
+            sessions[checkoutSessionId].shippingMethod = shippingMethod;
+            sessions[checkoutSessionId].updatedAt = Date.now();
+            localStorage.setItem('checkout_sessions', JSON.stringify(sessions));
+        }
+    } catch(e) {}
+}
+
+function updateTotal(subtotal) {
+    const total = subtotal + shippingCost;
+    document.getElementById('summaryTotal').innerText = total.toLocaleString();
+}
+
+renderCheckoutItems();
+
+// ==========================
+// 5. ACTION BUTTONS LOGIC
+// ==========================
+function validateForm() {
+    const name = document.getElementById('custName').value.trim();
+    const phone = document.getElementById('custPhone').value.trim();
+    const loc = document.getElementById('custLocation').value.trim();
+
+    if (!name || !phone || !loc) {
+        alert("Please fill in Name, Phone, and Delivery Location.");
+        return false;
+    }
+    if (!shippingMethod) {
+        alert("Please select a Delivery Method.");
+        return false;
+    }
+    return { name, phone, loc };
+}
+
+function processWhatsAppCheckout() {
+    const data = validateForm();
+    if (!data) return;
+
+    try {
+        if (checkoutSessionId) {
+            const sessions = JSON.parse(localStorage.getItem('checkout_sessions') || '{}');
+            sessions[checkoutSessionId] = sessions[checkoutSessionId] || {};
+            sessions[checkoutSessionId].user = { name: data.name, phone: data.phone };
+            sessions[checkoutSessionId].location = data.loc;
+            sessions[checkoutSessionId].shippingCost = shippingCost;
+            sessions[checkoutSessionId].shippingMethod = shippingMethod;
+            sessions[checkoutSessionId].updatedAt = Date.now();
+            localStorage.setItem('checkout_sessions', JSON.stringify(sessions));
+        }
+    } catch(e) {}
+
+    let msg = `*🛒 New Order Request*\n`;
+    msg += `---------------------------\n`;
+    msg += `👤 *Customer:* ${data.name}\n`;
+    msg += `📞 *Phone:* ${data.phone}\n`;
+    msg += `📍 *Location:* ${data.loc}\n`;
+    msg += `🚚 *Delivery:* ${shippingMethod} (Ksh ${shippingCost})\n`;
+    msg += `---------------------------\n*Items:*\n`;
+
+    let subtotal = 0;
+    cart.forEach(item => {
+        const qty = item.qty || 1;
+        const totalItem = item.price * qty;
+        subtotal += totalItem;
+        msg += `• ${item.title} (x${qty}) - Ksh ${totalItem}\n`;
+    });
+
+    const grandTotal = subtotal + shippingCost;
+    msg += `\n💰 *TOTAL PAYABLE: Ksh ${grandTotal.toLocaleString()}*`;
+    
+    const encodedMsg = encodeURIComponent(msg);
+    const phoneNumber = "254704843554"; 
+    
+    const appLink = `whatsapp://send?phone=${phoneNumber}&text=${encodedMsg}`;
+    const webLink = `https://wa.me/${phoneNumber}?text=${encodedMsg}`;
+    
+    if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+         window.location.href = appLink;
+         setTimeout(() => { window.location.href = webLink; }, 2000);
+    } else {
+         window.open(webLink, '_blank');
+    }
+}
+
+function processPayment() {
+    const data = validateForm();
+    if (!data) return;
+    try {
+        if (checkoutSessionId) {
+            const sessions = JSON.parse(localStorage.getItem('checkout_sessions') || '{}');
+            sessions[checkoutSessionId] = sessions[checkoutSessionId] || {};
+            sessions[checkoutSessionId].user = { name: data.name, phone: data.phone };
+            sessions[checkoutSessionId].location = data.loc;
+            sessions[checkoutSessionId].shippingCost = shippingCost;
+            sessions[checkoutSessionId].shippingMethod = shippingMethod;
+            sessions[checkoutSessionId].updatedAt = Date.now();
+            localStorage.setItem('checkout_sessions', JSON.stringify(sessions));
+        }
+    } catch(e) {}
+    
+    const grandTotal = document.getElementById('summaryTotal').innerText;
+    alert(`Initiating Payment for Ksh ${grandTotal}...\n\n(This would trigger the Payment Gateway integration).`);
+}
+
+</script>
+</body>
+</html>

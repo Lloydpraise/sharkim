@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<script async src="https://www.googletagmanager.com/gtag/js?id=AW-17577238441"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'AW-17577238441');
+</script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/png" href="images/icon%20logo.png">
+  <title>Sharkim Traders</title>
+  
+  <script src="https://cdn.tailwindcss.com/"></script>
+  <script src="https://unpkg.com/@supabase/supabase-js"></script>
+  
+  <style>
+    html, body { max-width: 100%; overflow-x: hidden; font-family: "Times New Roman", Times, serif, Arial, Helvetica, sans-serif; }
+    img, svg { max-width: 100%; height: auto; }
+    
+    /* Brand Colors */
+    .brand-orange { color: #ea580c; } /* Deep Orange */
+    .bg-brand-orange { background-color: #ea580c; }
+    .brand-green { background-color: #25D366; } /* WhatsApp Green */
+
+    /* Announcement Bar Gradient */
+    .announcement-bar {
+        background: linear-gradient(90deg, #ac8334, #f59e0b, #ac8334);
+        background-size: 200% 200%;
+        animation: gradientMove 10s ease infinite;
+    }
+    
+    /* Header Background */
+    .header-bg { background-color: #f3f4f6; }
+    
+    /* AI Search Button Glow (copied from indexlast exact style) */
+    .ai-search-glow {
+      position: relative;
+      z-index: 0;
+      overflow: hidden;
+      border-radius: 9999px; /* Rounded full */
+    }
+    .ai-search-glow::before {
+      content: '';
+      position: absolute;
+      z-index: -2;
+      left: -50%; top: -50%; width: 200%; height: 200%;
+      background-color: #399953;
+      background-repeat: no-repeat;
+      background-size: 50% 50%, 50% 50%;
+      background-position: 0 0, 100% 0, 100% 100%, 0 100%;
+      background-image: linear-gradient(#399953, #399953), linear-gradient(#fbb300, #fbb300), linear-gradient(#d53e33, #d53e33), linear-gradient(#377af5, #377af5);
+      animation: rotate 4s linear infinite;
+    }
+    .ai-search-glow::after {
+      content: '';
+      position: absolute;
+      z-index: -1;
+      left: 3px; top: 3px; width: calc(100% - 6px); height: calc(100% - 6px);
+      background: white;
+      border-radius: 9999px;
+    }
+
+    /* Section Title Underline: fixed underline element with animated gradient inside
+       The underline stays positioned under the title while the gradient inside moves. */
+    .title-underline {
+      position: relative;
+      display: inline-block;
+      padding-bottom: 8px;
+    }
+    .title-underline::after {
+      content: '';
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: -8px;
+      width: 120px;
+      height: 6px;
+      border-radius: 6px;
+      background: linear-gradient(90deg, #ac8334, #f59e0b, #ac8334);
+      background-size: 200% 100%;
+      animation: gradientMove 3s linear infinite;
+    }
+    /* Utility to opt-out of the underline for specific headings (e.g., About) */
+    .no-underline::after { display: none !important; }
+    /* Read-more link style for About section */
+    .read-more-btn { color: #ac8334; text-decoration: none; }
+
+    /* Hero Carousel */
+    .carousel-container { position: relative; overflow: hidden; height: 28rem; }
+    .carousel-slide { position: absolute; inset: 0; transition: opacity 1s ease-in-out; opacity: 0; }
+    .carousel-slide.active { opacity: 1; z-index: 10; }
+
+    /* Pop Out Card */
+    .pop-out-card {
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .pop-out-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Horizontal Scroll Snap for Mobile (You May Also Like) - one item per snap on mobile */
+    .horizontal-scroll {
+      display: flex;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+      gap: 1rem;
+      padding-bottom: 1rem;
+    }
+    .horizontal-scroll > * {
+      scroll-snap-align: start;
+      flex: 0 0 85%; /* show most of one card on mobile */
+    }
+    @media (min-width: 768px) {
+      .horizontal-scroll {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr); /* 4 cols on desktop */
+        overflow-x: visible;
+      }
+      .horizontal-scroll > * { flex: auto; }
+    }
+
+    /* Desktop categories sidebar should match hero height and scroll internally */
+    #desktopCategories { max-height: 28rem; overflow-y: auto; }
+
+    /* Browse by category: two-row horizontal scroll on mobile, grid on desktop */
+    .two-row-scroll {
+      display: grid;
+      grid-template-rows: repeat(2, auto);
+      grid-auto-flow: column;
+      grid-auto-columns: 45%;
+      gap: 1rem;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+      padding-bottom: 1rem;
+    }
+    .two-row-scroll > * { scroll-snap-align: start; }
+    @media (min-width: 768px) {
+      .two-row-scroll { display: grid; grid-template-columns: repeat(6, 1fr); grid-auto-flow: row; grid-auto-columns: auto; overflow-x: visible; }
+      .two-row-scroll > * { scroll-snap-align: none; }
+    }
+
+    /* Independent horizontal rows (You May Also Like) on mobile */
+    .independent-row { display:flex; overflow-x:auto; gap:0.75rem; scroll-snap-type:x mandatory; -webkit-overflow-scrolling: touch; padding-bottom:1rem; }
+    .independent-row > * { scroll-snap-align: start; flex: 0 0 48%; }
+    @media (min-width:768px) {
+      .independent-row { display:grid; grid-template-columns: repeat(4,1fr); overflow-x:visible; }
+      .independent-row > * { flex:auto; }
+    }
+
+    /* Animations */
+    @keyframes rotate { 100% { transform: rotate(1turn); } }
+    @keyframes gradientMove { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+    @keyframes slideLine { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+
+    /* Utilities */
+    #discount-badge, .discount-badge { background: #ea580c !important; color: #ffffff !important; padding: 2px 6px !important; border-radius: 4px !important; }
+  </style>
+  <link rel="preload" as="image" href="images/Banner.png" imagesrcset="images/Banner.png 1200w" imagesizes="100vw">
+</head>
+
+<body class="bg-gray-100">
+
+<div class="announcement-bar w-full text-white text-xs md:text-sm text-center py-2 px-4 font-bold tracking-wide">
+  🎉 FREE Shipping on orders over Ksh 5000! | Limited Time Deals! 🚚
+</div>
+
+<header class="header-bg py-3 sticky top-0 z-40 shadow-sm">
+  <div class="max-w-7xl mx-auto px-3 relative">
+    
+    <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <button id="mobileMenuBtn" class="md:hidden text-gray-800">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
+          </button>
+          <a href="index.html" class="flex-shrink-0 absolute left-1/2 transform -translate-x-1/2 md:static md:transform-none z-10">
+            <img src="images/sharkim_gold_logo.png" alt="Sharkim Logo" class="h-16 md:h-24 object-contain" width="240" height="96" loading="eager" decoding="async">
+          </a>
+        </div>
+
+        <div class="hidden md:flex flex-1 justify-center mx-12">
+            <div class="relative w-full max-w-3xl flex items-center gap-4">
+                <div class="relative flex-1">
+                    <input type="text" id="searchInputDesktop" placeholder="I am looking for..." class="w-full pl-5 pr-32 py-3 rounded-full border border-gray-300 focus:outline-none focus:border-[#ea580c] bg-white shadow-sm">
+                    <button id="searchBtnDesktop" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-[#ea580c]">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                    </button>
+                </div>
+                <div class="flex-shrink-0">
+                  <button id="aiSearchDesktop" class="ai-search-glow px-6 py-3 bg-white text-[#1f2937] font-semibold rounded-full shadow-sm">
+                    Search with AI
+                  </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <button id="cartBtn" class="relative text-gray-800 hover:text-[#ea580c] transition">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4h-2l-1 2H1v2h2l3.6 7.6-1.4 2.4c-.2.3-.2.8 0 1.2.2.4.6.6 1 .6h12v-2H7.4c-.1 0-.2 0-.2-.1l.9-1.5h7.9c.4 0 .7-.2.9-.5l3.6-6.5c.2-.4.1-.8 0-1.1-.2-.3-.5-.5-.9-.5H6.2L5.3 4H7zm0 16c-1.1 0-2 .9-2 2s.9 2 2 2c1.2 0 2-.9 2-2s-.8-2-2-2zm10 0c-1.1 0-2 .9-2 2s.9 2 2 2c1.2 0 2-.9 2-2s-.9-2-2-2z"/></svg>
+            <span id="cartCount" class="absolute -top-1 -right-2 bg-[#ea580c] text-white text-xs font-bold px-1.5 py-0.5 rounded-full">0</span>
+          </button>
+        </div>
+    </div>
+
+    
+
+    <div class="md:hidden mt-10 flex gap-2 w-full">
+         <div class="relative flex-grow">
+            <input type="text" id="searchInputMobile" placeholder="I am looking for..." class="w-full pl-3 pr-8 py-2.5 text-sm rounded-lg border border-gray-300 focus:outline-none focus:border-[#ea580c] bg-white">
+            <button id="searchBtnMobile" class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+            </button>
+         </div>
+         <button class="ai-search-glow px-3 py-2.5 text-xs font-bold text-gray-900 bg-white flex items-center gap-1 shadow-sm whitespace-nowrap" id="aiSearchMobile">
+           Search with AI
+         </button>
+    </div>
+  </div>
+</header>
+
+<div id="mobileMenuDrawer" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-black bg-opacity-50" id="mobileMenuBackdrop"></div>
+    <div class="absolute top-0 left-0 w-3/4 max-w-sm h-full bg-white shadow-xl flex flex-col transform transition-transform duration-300">
+        <div class="p-4 flex justify-between items-center border-b">
+            <h2 class="text-xl font-bold text-[#ea580c]">Categories</h2>
+            <button id="closeMobileMenu" class="text-gray-600">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+        </div>
+        <ul id="mobileMenuListItems" class="p-4 space-y-2 overflow-y-auto flex-1">
+            </ul>
+    </div>
+</div>
+
+<section class="w-full mt-2">
+  <div class="max-w-7xl mx-auto">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-start">
+      <aside id="desktopCategories" class="hidden md:block md:col-span-1 bg-white rounded-xl shadow-sm p-4">
+        <h3 class="font-bold text-lg mb-3 text-[#ea580c]">Categories</h3>
+        <ul id="desktopCategoriesList" class="space-y-2 text-sm text-gray-700"></ul>
+      </aside>
+
+      <div class="md:col-span-3">
+        <div class="carousel-container rounded-none md:rounded-xl shadow-lg bg-white">
+        <div class="carousel-slide active">
+          <img src="images/Banner.png" class="w-full h-full object-cover" alt="Banner 1" width="1200" height="600" decoding="async" fetchpriority="high">
+            <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+            <div class="absolute bottom-8 left-0 w-full flex flex-col items-center">
+                <h2 class="text-3xl md:text-5xl font-bold text-white mb-4 drop-shadow-md">Upgrade Your Home</h2>
+                <a href="shop.html" class="px-8 py-3 bg-[#ea580c] text-white font-bold rounded-full hover:bg-orange-700 transition shadow-md border-2 border-white/20">Shop Now</a>
+            </div>
+        </div>
+           <div class="carousel-slide">
+             <img src="https://via.placeholder.com/1200x600/1f2937/ffffff?text=Electronics+Sale" class="w-full h-full object-cover" alt="Banner 2" width="1200" height="600" loading="lazy" decoding="async">
+             <div class="absolute bottom-8 left-0 w-full flex flex-col items-center">
+                <h2 class="text-3xl md:text-5xl font-bold text-white mb-4 drop-shadow-md">Best Electronics</h2>
+                <a href="shop.html" class="px-8 py-3 bg-[#ea580c] text-white font-bold rounded-full hover:bg-orange-700 transition shadow-md">View Offers</a>
+            </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<main class="max-w-7xl mx-auto px-3 py-8 space-y-12">
+
+    <section>
+        <h2 class="text-2xl font-bold text-center mb-6 text-gray-800"><span class="title-underline">Top Categories</span></h2>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4" id="topCategoriesContainer">
+            </div>
+    </section>
+
+    <section class="bg-white rounded-xl p-4 md:p-6 shadow-sm border border-gray-100">
+        <div class="flex flex-col md:flex-row items-center justify-between mb-6 border-b pb-4">
+            <h2 class="text-2xl md:text-3xl font-extrabold italic text-gray-800"><span class="text-[#ea580c]">⚡ FLASH</span> SALES</h2>
+            <div class="flex items-center gap-2 mt-4 md:mt-0">
+                <span class="font-bold text-gray-600 text-sm">Ends in:</span>
+                <div class="flex gap-1 text-center">
+                    <div class="bg-[#ea580c] text-white rounded px-2 py-1 font-mono font-bold">02</div>:
+                    <div class="bg-[#ea580c] text-white rounded px-2 py-1 font-mono font-bold">45</div>:
+                    <div class="bg-[#ea580c] text-white rounded px-2 py-1 font-mono font-bold">30</div>
+                </div>
+            </div>
+        </div>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4" id="flashSalesContainer">
+             </div>
+    </section>
+
+    <section>
+      <h2 class="text-2xl font-bold text-center mb-8 text-gray-800"><span class="title-underline">Browse by Category</span></h2>
+      <div class="two-row-scroll" id="roundCategoriesContainer">
+      </div>
+    </section>
+
+    <section>
+           <div class="flex items-center justify-between mb-4">
+             <h2 class="text-xl md:text-2xl font-bold text-gray-800"><span class="title-underline">You May Also Like</span></h2>
+             <a href="shop.html" class="text-[#ea580c] hover:underline font-semibold text-sm">View More &rarr;</a>
+        </div>
+        <div class="space-y-4">
+          <div class="independent-row" id="youMayLikeRow1"></div>
+          <div class="independent-row" id="youMayLikeRow2"></div>
+        </div>
+    </section>
+
+    <section class="bg-white rounded-xl shadow p-6 md:p-8 grid md:grid-cols-2 gap-8 items-center">
+      <div>
+        <h2 class="text-2xl font-bold mb-4 text-[#ac8334]">About Sharkim Traders</h2>
+        <p class="text-gray-600 mb-4 leading-relaxed">
+          Sharkim Traders is your premier destination for quality home appliances and electronics in Kenya. Established with a vision to bring convenience and modernity to Kenyan homes, we source only the best products from trusted brands. Our commitment goes beyond just selling; we believe in building lasting relationships with our customers through exceptional service, transparent pricing, and reliable after-sales support.
+        </p>
+        <a href="about.html" class="text-red-600 font-semibold hover:underline">Read our full story &rarr;</a>
+      </div>
+      <div class="rounded-xl overflow-hidden h-64 md:h-auto relative">
+        <img src="images/sharkim_gold_logo.png" alt="About Us" class="w-full h-full object-contain bg-gray-50 p-4" width="600" height="300" loading="lazy" decoding="async">
+      </div>
+    </section>
+
+    <section class="bg-gray-50 rounded-xl shadow-inner p-6 md:p-8">
+      <div class="text-center max-w-3xl mx-auto">
+         <h2 class="text-2xl font-bold mb-6 text-gray-800">Shipping & Delivery Information</h2>
+         <div class="grid md:grid-cols-3 gap-6 text-left">
+           <div class="bg-white p-4 rounded-lg shadow-sm flex flex-col items-center text-center">
+             <svg xmlns="http://www.w3.org/2000/svg" class="w-10 h-10 text-[#ac8334] mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0" /></svg>
+             <h3 class="font-bold mb-2">Countrywide Delivery</h3>
+             <p class="text-sm text-gray-600">We deliver to all major towns across Kenya via reliable courier partners.</p>
+           </div>
+           <div class="bg-white p-4 rounded-lg shadow-sm flex flex-col items-center text-center">
+             <svg xmlns="http://www.w3.org/2000/svg" class="w-10 h-10 text-[#ac8334] mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+             <h3 class="font-bold mb-2">Fast Turnaround</h3>
+             <p class="text-sm text-gray-600">Nairobi orders often delivered within 24hrs. Up to 48-72hrs for other regions.</p>
+           </div>
+            <div class="bg-white p-4 rounded-lg shadow-sm flex flex-col items-center text-center">
+             <svg xmlns="http://www.w3.org/2000/svg" class="w-10 h-10 text-[#ac8334] mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>
+             <h3 class="font-bold mb-2">Payment Options</h3>
+             <p class="text-sm text-gray-600">Pay conveniently via M-Pesa, Bank Transfer, or Cash on Delivery (selected areas).</p>
+           </div>
+         </div>
+      </div>
+     </section>
+
+    <section>
+      <h2 class="text-2xl font-bold text-center mb-6 text-gray-800">Frequently Asked Questions</h2>
+      <div class="max-w-3xl mx-auto space-y-4">
+        <details class="bg-white rounded-lg shadow-sm group">
+          <summary class="flex justify-between items-center p-4 cursor-pointer font-semibold text-gray-800 focus:outline-none">
+            <span>How do I place an order?</span>
+             <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-gray-500 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+          </summary>
+          <div class="px-4 pb-4 text-gray-600 text-sm">
+            Simply browse our products, add desired items to your cart, and proceed to checkout. You can complete your order via WhatsApp or Email, and our team will confirm details and payment.
+          </div>
+        </details>
+        <details class="bg-white rounded-lg shadow-sm group">
+          <summary class="flex justify-between items-center p-4 cursor-pointer font-semibold text-gray-800 focus:outline-none">
+            <span>What is your return policy?</span>
+             <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-gray-500 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+          </summary>
+          <div class="px-4 pb-4 text-gray-600 text-sm">
+            We accept returns for items with manufacturing defects within a specific period from delivery. Please contact our support immediately if you encounter an issue. Ensure the item is in original packaging.
+          </div>
+        </details>
+        <details class="bg-white rounded-lg shadow-sm group">
+          <summary class="flex justify-between items-center p-4 cursor-pointer font-semibold text-gray-800 focus:outline-none">
+            <span>Do you offer warranties?</span>
+             <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-gray-500 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+          </summary>
+          <div class="px-4 pb-4 text-gray-600 text-sm">
+            Yes, most electronic appliances come with a standard manufacturer's warranty ranging from 1 to 2 years. Specific warranty details are provided with the product documentation.
+          </div>
+        </details>
+      </div>
+    </section>
+
+</main>
+
+<footer class="bg-black text-gray-300 mt-10">
+  <div class="max-w-7xl mx-auto px-6 py-10 grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
+    <div class="order-1">
+      <img src="images/sharkim_gold_logo.png" alt="Company Logo" class="h-24 mb-4 object-contain" width="200" height="80" loading="lazy" decoding="async">
+      <p class="mb-2">WhatsApp Us: <a href="https://wa.me/254704843554" class="text-[#ac8334] font-medium">+254 704 843 554</a></p>
+      <p class="mb-2">Call Us: <a href="tel:+254704843554" class="text-white font-medium">+254 704 843 554</a></p>
+      <p class="mb-2">Email Us: <a href="mailto:sharkimtraders97@gmail.com" class="text-[#ac8334] font-medium">sharkimtraders97@gmail.com</a></p>
+      <p class="text-sm text-gray-400">Time: 8:30AM - 6:30PM</p>
+    </div>
+
+    <div class="order-2 flex justify-center md:justify-center">
+      <div class="w-full md:w-64">
+        <h3 class="text-lg font-semibold mb-3 text-white text-left md:text-left">Quick Links</h3>
+        <ul class="space-y-2 text-sm mb-6 text-left">
+          <li><a href="index.html" class="hover:text-[#ac8334]">Home</a></li>
+          <li><a href="shop.html" class="hover:text-[#ac8334]">Shop</a></li>
+          <li><a href="about.html" class="hover:text-[#ac8334]">About Us</a></li>
+          <li><a href="faq.html" class="hover:text-[#ac8334]">FAQ</a></li>
+          <li><a href="contact.html" class="hover:text-[#ac8334]">Contact</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="order-3 text-right md:text-right">
+      <h3 class="text-lg font-semibold mb-3 text-white">Working Hours</h3>
+      <p class="mb-1">Monday - Saturday: <span class="font-medium">08:30 - 18:30</span></p>
+      <p class="mb-3">Sunday: <span class="text-red-500">Closed</span></p>
+
+      <h3 class="text-lg font-semibold mb-3 text-white">Payments</h3>
+      <div class="flex space-x-3 bg-white p-2 rounded justify-end"> <img src="images/mpesa1.png" alt="MPESA" class="h-8 object-contain" width="48" height="24" loading="lazy" decoding="async">
+        <img src="images/im-bank.png" alt="I&M Bank" class="h-8 object-contain" width="48" height="24" loading="lazy" decoding="async">
+        <img src="images/equity.png" alt="Equity Bank" class="h-8 object-contain" width="48" height="24" loading="lazy" decoding="async">
+      </div>
+    </div>
+  </div>
+  <div class="bg-black text-[#ac8334] text-center py-3 mt-6 border-t border-gray-800">
+    <p class="text-sm">&copy; 2025 Sharkim Traders. All rights reserved.</p>
+  </div>
+</footer>
+
+<script src="js/categories.js"></script>
+<script>
+// =====================
+// SUPABASE
+// =====================
+const SUPABASE_URL = 'https://evmiakneqtoxvnzeiwlz.supabase.co/';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV2bWlha25lcXRveHZuemVpd2x6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzMTU4NTEsImV4cCI6MjA2OTg5MTg1MX0.lgW9OGAg8etuIzWPs-t0Ek_P7y3_m5GEo-ZSzbqbsGc';
+const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// =====================
+// MOBILE MENU
+// =====================
+const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+const mobileMenuDrawer = document.getElementById('mobileMenuDrawer');
+const mobileMenuBackdrop = document.getElementById('mobileMenuBackdrop');
+const closeMobileMenu = document.getElementById('closeMobileMenu');
+const mobileMenuListItems = document.getElementById('mobileMenuListItems');
+
+function toggleMobileMenu() { mobileMenuDrawer.classList.toggle('hidden'); }
+if(mobileMenuBtn) mobileMenuBtn.addEventListener('click', toggleMobileMenu);
+if(closeMobileMenu) closeMobileMenu.addEventListener('click', toggleMobileMenu);
+if(mobileMenuBackdrop) mobileMenuBackdrop.addEventListener('click', toggleMobileMenu);
+
+function buildMobileMenu(){
+  mobileMenuListItems.innerHTML = '';
+  (window.MAIN_CATEGORIES || []).forEach(cat => {
+    const li = document.createElement('li');
+    li.innerHTML = `<a class="block px-4 py-3 rounded-lg text-gray-700 font-medium hover:bg-gray-100 hover:text-[#ea580c] transition" href="shop.html?main=${encodeURIComponent(cat)}">${cat}</a>`;
+    mobileMenuListItems.appendChild(li);
+  });
+}
+setTimeout(buildMobileMenu, 500);
+
+function buildDesktopCategories(){
+  const wrap = document.getElementById('desktopCategoriesList');
+  if(!wrap) return;
+  wrap.innerHTML = '';
+  (window.MAIN_CATEGORIES || []).forEach(cat => {
+    const li = document.createElement('li');
+    li.innerHTML = `<a class="block px-3 py-2 rounded hover:bg-gray-100 hover:text-[#ea580c] transition font-medium" href="shop.html?main=${encodeURIComponent(cat)}">${cat}</a>`;
+    wrap.appendChild(li);
+  });
+}
+setTimeout(buildDesktopCategories, 600);
+
+// =====================
+// HERO CAROUSEL
+// =====================
+let currentSlide = 0;
+const slides = document.querySelectorAll('.carousel-slide');
+function nextSlide() {
+    slides[currentSlide].classList.remove('active');
+    currentSlide = (currentSlide + 1) % slides.length;
+    slides[currentSlide].classList.add('active');
+}
+if (slides.length > 1) { setInterval(nextSlide, 5000); }
+
+// =====================
+// CART LOGIC
+// =====================
+let cart = JSON.parse(localStorage.getItem('cart') || '[]');
+const cartCountBadge = document.getElementById('cartCount');
+
+function saveCart(){ localStorage.setItem('cart', JSON.stringify(cart)); }
+function updateCartCount(){ 
+    if (cartCountBadge) cartCountBadge.innerText = cart.length; 
+}
+updateCartCount();
+
+// Create Cart Drawer
+// =====================
+// UPDATED CART DRAWER STRUCTURE
+// =====================
+(function ensureCartDrawer(){
+  if (document.getElementById('cartDrawer')) return;
+  
+  const drawer = document.createElement('div');
+  drawer.id = 'cartDrawer';
+  drawer.className = 'fixed top-0 right-0 w-96 max-w-full h-full bg-white shadow-2xl z-[100] flex flex-col transition-transform transform translate-x-full duration-300'; 
+  
+  // Note: Added translate-x-full for sliding animation class control
+  
+  drawer.innerHTML = `
+    <div class="flex justify-between items-center p-5 border-b bg-gray-50">
+        <h2 class="text-xl font-bold text-gray-800">Your Cart</h2>
+        <button id="cartClose" class="text-gray-500 hover:text-red-500 transition">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+        </button>
+    </div>
+
+    <div id="cartItems" class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-100">
+        </div>
+
+    <div class="p-5 bg-white border-t shadow-[0_-5px_15px_rgba(0,0,0,0.05)]">
+      
+      <div class="flex justify-between items-end mb-1">
+          <span class="text-gray-600 font-medium">Total</span>
+          <span class="text-3xl font-extrabold text-[#ea580c]">Ksh <span id="cartTotal">0</span></span>
+      </div>
+      
+      <div id="cartSavingsArea" class="text-right mb-6 hidden">
+          <span class="text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded">You have saved: Ksh <span id="cartSavings">0</span></span>
+      </div>
+
+      <button id="proceedCheckoutBtn" class="w-full py-4 bg-[#ea580c] text-white text-lg font-bold rounded-xl hover:bg-orange-700 transition shadow-lg flex items-center justify-center gap-2">
+             Proceed to Checkout 
+             <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
+      </button>
+    </div>
+  `;
+  
+  document.body.appendChild(drawer);
+
+  // Backdrop
+  const backdrop = document.createElement('div');
+  backdrop.id = 'cartBackdrop';
+  backdrop.className = 'fixed inset-0 bg-black bg-opacity-50 hidden z-[90] transition-opacity duration-300';
+  document.body.appendChild(backdrop);
+  
+  // Events
+  backdrop.onclick = closeCart;
+  document.getElementById('cartClose').onclick = closeCart;
+  document.getElementById('proceedCheckoutBtn').onclick = () => {
+      // Placeholder for next step
+      // window.location.href = 'checkout.html'; 
+      alert("Proceeding to checkout design...");
+  };
+})();
+
+function openCart(){ 
+    renderCart(); 
+    const d = document.getElementById('cartDrawer');
+    d.classList.remove('hidden');
+    // Small timeout to allow removing 'hidden' before animating transform
+    d.classList.remove('translate-x-full'); 
+    document.getElementById('cartBackdrop').classList.remove('hidden'); 
+}
+
+function closeCart(){ 
+    const d = document.getElementById('cartDrawer');
+    d.classList.add('translate-x-full'); // Slide out
+    document.getElementById('cartBackdrop').classList.add('hidden');
+    // Wait for animation to finish before hiding
+    // setTimeout(() => d.classList.add('hidden'), 300); 
+}
+
+document.getElementById('cartBtn').onclick = openCart;
+
+// =====================
+// UPDATED RENDER CART (New Design)
+// =====================
+function renderCart(){
+  const wrap = document.getElementById('cartItems');
+  const totalEl = document.getElementById('cartTotal');
+  const savingsEl = document.getElementById('cartSavings');
+  const savingsArea = document.getElementById('cartSavingsArea');
+  
+  wrap.innerHTML = '';
+  
+  let total = 0;
+  let totalSavings = 0;
+
+  if (cart.length === 0) { 
+      wrap.innerHTML = `
+        <div class="flex flex-col items-center justify-center h-full text-gray-400">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-16 h-16 mb-4 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+            <p>Your cart is empty</p>
+        </div>`; 
+      totalEl.innerText = '0'; 
+      if(savingsArea) savingsArea.classList.add('hidden');
+      return; 
+  }
+
+  cart.forEach((item, idx) => {
+    // Math
+    const qty = item.qty || 1;
+    const price = Number(item.price) || 0;
+    const origPrice = Number(item.original_price) || 0;
+    
+    total += price * qty;
+    if(origPrice > price) {
+        totalSavings += (origPrice - price) * qty;
+    }
+
+    // HTML Component
+    const row = document.createElement('div');
+    row.className = 'relative flex gap-3 bg-white p-3 rounded-xl border border-gray-200 shadow-sm';
+    
+    row.innerHTML = `
+      <button onclick="removeFromCart(${idx})" class="absolute top-2 right-2 text-gray-300 hover:text-red-500 p-1">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+      </button>
+
+      <div class="w-20 h-20 bg-white rounded-lg overflow-hidden flex-shrink-0 border border-gray-100">
+        <img src="${item.image_url}" class="w-full h-full object-contain" loading="lazy" alt="${item.title}">
+      </div>
+
+      <div class="flex-1 flex flex-col justify-between py-1">
+        <div>
+            <h4 class="font-bold text-sm text-gray-800 line-clamp-2 pr-6 leading-tight">${item.title}</h4>
+            <div class="mt-1">
+                ${origPrice > price ? `<span class="text-xs text-gray-400 line-through mr-2">Ksh ${origPrice.toLocaleString()}</span>` : ''}
+                <span class="text-[#ea580c] font-bold text-base">Ksh ${price.toLocaleString()}</span>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-3 mt-2">
+             <button onclick="updateQty(${idx}, -1)" class="w-7 h-7 flex items-center justify-center rounded-full bg-gray-100 text-gray-600 hover:bg-[#ea580c] hover:text-white transition font-bold text-lg leading-none pb-1">-</button>
+             <span class="font-bold text-gray-800 w-4 text-center text-sm">${qty}</span>
+             <button onclick="updateQty(${idx}, 1)" class="w-7 h-7 flex items-center justify-center rounded-full bg-gray-100 text-gray-600 hover:bg-[#ea580c] hover:text-white transition font-bold text-lg leading-none pb-1">+</button>
+        </div>
+      </div>
+    `;
+    wrap.appendChild(row);
+  });
+
+  // Update Footer Totals
+  totalEl.innerText = total.toLocaleString();
+  
+  if(typeof totalSavings !== 'undefined' && totalSavings > 0) {
+      if(savingsEl) savingsEl.innerText = totalSavings.toLocaleString();
+      if(savingsArea) savingsArea.classList.remove('hidden');
+  } else if(savingsArea) {
+      savingsArea.classList.add('hidden');
+  }
+}
+
+// Helper functions for Cart Actions
+window.removeFromCart = (idx) => {
+    cart.splice(idx, 1);
+    saveCart();
+    updateCartCount();
+    renderCart();
+};
+
+window.updateQty = (idx, change) => {
+    if(cart[idx]) {
+        cart[idx].qty = (cart[idx].qty || 1) + change;
+        if(cart[idx].qty < 1) cart[idx].qty = 1; // Prevent going below 1
+        saveCart();
+        renderCart(); // Re-render to update totals
+    }
+};
+
+function checkoutWhatsApp(){
+  if (cart.length === 0) return alert('Your cart is empty!');
+  let msg = '🛒 *New Order from Sharkim Traders*\n\n';
+  let total = 0; cart.forEach((item, i) => { const qty = item.qty||1; msg += `${i+1}. ${item.title} x${qty} - Ksh ${Number(item.price)*qty}\n`; total += Number(item.price||0)*qty; });
+  msg += `\n----------------------\n💰 *Total:* Ksh ${total}\n\n`;
+  msg += '📍 Please confirm delivery details.';
+  window.open(`https://wa.me/+254704843554?text=${encodeURIComponent(msg)}`, '_blank');
+}
+
+
+// =====================
+// PRODUCTS
+// =====================
+let allProducts = [];
+
+async function fetchProducts(){
+  const { data, error } = await client.from('Products').select('*');
+  if (error) { console.error(error); return; }
+  allProducts = (data||[]).map(p => ({
+    ...p,
+    category: p.category || p.main_category || 'Uncategorized',
+    sub_category: p.sub_category || p.subcategory || ''
+  }));
+  distributeProducts(allProducts);
+  // Enhance images added by JS (ensure decoding/loading attributes are set)
+  if (typeof enhanceImages === 'function') enhanceImages();
+}
+
+function distributeProducts(products){
+    const topCatsContainer = document.getElementById('topCategoriesContainer');
+    const flashSalesContainer = document.getElementById('flashSalesContainer');
+    const roundCategoriesContainer = document.getElementById('roundCategoriesContainer');
+    const youMayLikeRow1 = document.getElementById('youMayLikeRow1');
+    const youMayLikeRow2 = document.getElementById('youMayLikeRow2');
+
+    // 1. Top Categories (Name below image)
+    const topCats = (window.MAIN_CATEGORIES || []).slice(0, 4);
+    topCats.forEach(cat => {
+      const catP = products.filter(p => p.category === cat);
+      const img = catP.length > 0 ? catP[0].image_url : 'https://via.placeholder.com/400x400/cccccc/666666?text=' + encodeURIComponent(cat);
+      const el = document.createElement('a');
+      el.href = `shop.html?main=${encodeURIComponent(cat)}`;
+      el.className = "flex flex-col group";
+      el.innerHTML = `
+        <div class="overflow-hidden rounded-xl h-40 md:h-56 mb-2 border border-gray-100 shadow-sm">
+          <img src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" data-src="${img}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" decoding="async" alt="${cat}" width="600" height="400">
+        </div>
+        <span class="text-center font-bold text-gray-800 group-hover:text-[#ea580c]">${cat}</span>
+      `;
+      topCatsContainer.appendChild(el);
+    });
+
+    // 2. Flash Sales (Pop-out, Clean White)
+    const shuffled = [...products].sort(() => 0.5 - Math.random());
+    shuffled.slice(0, 4).forEach(p => flashSalesContainer.appendChild(renderCard(p, true)));
+
+    // 3. Round Categories
+    (window.MAIN_CATEGORIES || []).slice(0, 6).forEach(cat => {
+         const catP = products.filter(p => p.category === cat);
+         const img = catP.length > 0 ? catP[0].image_url : 'https://via.placeholder.com/150';
+         const el = document.createElement('a');
+         el.href = `shop.html?main=${encodeURIComponent(cat)}`;
+         el.className = "flex flex-col items-center group";
+         el.innerHTML = `
+          <div class="w-20 h-20 md:w-28 md:h-28 rounded-full shadow-md overflow-hidden mb-2 border-2 border-transparent group-hover:border-[#ea580c] transition">
+            <img src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" data-src="${img}" class="w-full h-full object-cover" decoding="async" alt="${cat}" width="150" height="150">
+          </div>
+            <span class="text-xs md:text-sm font-semibold text-center text-gray-800 group-hover:text-[#ea580c]">${cat}</span>
+         `;
+         roundCategoriesContainer.appendChild(el);
+    });
+
+    // 4. You May Also Like (split into two rows for independent mobile scrolling)
+    const mayLike = shuffled.slice(4, 20);
+    mayLike.forEach((p, i) => {
+      if (!youMayLikeRow1 || !youMayLikeRow2) return;
+      // Use pop-out (true) so these cards match flash sales sizing/style
+      if (i % 2 === 0) youMayLikeRow1.appendChild(renderCard(p, true));
+      else youMayLikeRow2.appendChild(renderCard(p, true));
+    });
+}
+
+// Global addToCart accessible by inline onclick
+// =====================
+// UPDATED ADD TO CART (Handles Quantity)
+// =====================
+window.addToCart = (id) => {
+  // 1. Find product in allProducts
+  const p = allProducts.find(x => x.id == id);
+  if(p) {
+    // 2. Check if already in cart
+    const existingItem = cart.find(x => x.id == id);
+    if(existingItem) {
+      existingItem.qty = (existingItem.qty || 1) + 1;
+    } else {
+      // 3. Add new with qty 1
+      cart.push({ ...p, qty: 1 });
+    }
+        
+    saveCart(); 
+    updateCartCount(); 
+    renderCart(); // Update drawer immediately if open
+        
+    // Visual Feedback on Button
+    const btn = document.querySelector(`button[onclick="addToCart('${id}')"]`) || document.activeElement;
+    if(btn && (btn.innerText.includes('CART') || btn.innerText.includes('Add') || btn.innerText.includes('ADD'))) {
+      const old = btn.innerHTML || btn.innerText; 
+      btn.innerHTML = '✔ Added';
+      btn.classList.add('bg-green-100');
+      setTimeout(() => {
+        if(old) btn.innerHTML = old;
+        btn.classList.remove('bg-green-100');
+      }, 1000);
+    }
+  }
+};
+
+function renderCard(product, isPopOut){
+  const disc = (product.original_price && product.original_price > product.price)
+    ? Math.round(((product.original_price - product.price)/product.original_price)*100) : 0;
+  
+  const el = document.createElement('div');
+  // If in horizontal scroll, set fixed width, else auto
+  // Narrower width for cards so they are closer to square when height increased
+  const widthClass = isPopOut ? '' : 'w-36 md:w-auto flex-shrink-0'; 
+  
+  el.className = `bg-white p-4 rounded-xl shadow-sm border border-gray-100 relative flex flex-col ${isPopOut ? 'pop-out-card' : ''} ${widthClass}`;
+
+      el.innerHTML = `
+    <a href="product.html?id=${encodeURIComponent(product.id)}" class="block mb-3 relative h-48 md:h-64 overflow-hidden rounded-lg flex items-center justify-center p-2 bg-white">
+      <img src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" data-src="${product.image_url}" class="w-full h-full object-contain hover:scale-105 transition duration-300" decoding="async" alt="${product.title}" width="600" height="400">
+      ${disc ? `<span class="discount-badge absolute top-0 left-0 text-[10px] font-bold">-${disc}%</span>` : ''}
+    </a>
+    
+    <div class="flex-1 flex flex-col">
+        <h3 class="text-sm font-bold text-gray-800 line-clamp-2 leading-tight mb-1 h-12">${product.title}</h3>
+        <div class="mb-2">
+            ${product.original_price ? `<span class="text-xs text-gray-400 line-through mr-1">Ksh ${product.original_price}</span>` : ''}
+            <span class="text-base font-bold text-[#ea580c]">Ksh ${product.price}</span>
+        </div>
+        
+        <div class="mt-auto flex flex-col gap-2">
+            <button onclick="addToCart('${product.id}')" class="w-full py-1.5 border border-gray-200 bg-white text-gray-800 text-xs font-bold rounded hover:bg-gray-50 hover:text-[#ea580c] transition">
+                ADD TO CART
+            </button>
+            
+            <a href="https://wa.me/+254704843554?text=${encodeURIComponent('Hi, I want to buy: ' + product.title + ' @ Ksh ' + product.price)}" target="_blank" class="w-full py-1.5 bg-[#ea580c] text-white text-xs font-bold rounded text-center hover:bg-orange-700 transition">
+                BUY NOW
+            </a>
+        </div>
+    </div>
+  `;
+  return el;
+}
+
+// Ensure images created dynamically have recommended performance attributes
+function enhanceImages(){
+  document.querySelectorAll('img').forEach(img => {
+    try {
+      if (!img.hasAttribute('decoding')) img.setAttribute('decoding', 'async');
+      if (!img.hasAttribute('loading')) {
+        // Keep hero / high-priority images eager
+        if (img.getAttribute('fetchpriority') === 'high' || img.closest('.carousel-container')) img.setAttribute('loading', 'eager');
+        else img.setAttribute('loading', 'lazy');
+      }
+      if (!img.hasAttribute('alt')) img.setAttribute('alt', '');
+    } catch(e) { /* ignore for odd SVGs */ }
+  });
+}
+
+// Search Logic
+function handleSearch(id) {
+    const val = document.getElementById(id).value.trim();
+    if(val) window.location.href = `shop.html?q=${encodeURIComponent(val)}`;
+}
+document.getElementById('searchBtnDesktop')?.addEventListener('click', () => handleSearch('searchInputDesktop'));
+document.getElementById('searchBtnMobile')?.addEventListener('click', () => handleSearch('searchInputMobile'));
+
+// AI search buttons (desktop & mobile) — focus or trigger search
+document.getElementById('aiSearchDesktop')?.addEventListener('click', () => {
+  const inp = document.getElementById('searchInputDesktop');
+  if (!inp) return;
+  if (inp.value.trim()) handleSearch('searchInputDesktop'); else inp.focus();
+});
+document.getElementById('aiSearchMobile')?.addEventListener('click', () => {
+  const inp = document.getElementById('searchInputMobile');
+  if (!inp) return;
+  if (inp.value.trim()) handleSearch('searchInputMobile'); else inp.focus();
+});
+
+fetchProducts();
+</script>
+<script src="js/lazyload.js"></script>
+</body>
+</html>

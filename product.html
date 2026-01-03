@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=AW-17577238441"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'AW-17577238441');
+  </script>
+  
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <link rel="icon" type="image/png" href="images/icon%20logo.png">
+  <title>Product Details - Sharkim Traders</title>
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/@supabase/supabase-js"></script>
+  
+  <style>
+    html, body { max-width: 100%; overflow-x: hidden; font-family: "Times New Roman", Times, serif, Arial, Helvetica, sans-serif; }
+    body { padding-bottom: 80px; /* Space for mobile sticky footer */ }
+    img, svg { max-width: 100%; height: auto; }
+    
+    /* Brand Colors */
+    .brand-orange { color: #ea580c; }
+    .bg-brand-orange { background-color: #ea580c; }
+    .text-brand-orange { color: #ea580c; }
+    .brand-green { color: #25D366; } 
+    .bg-brand-green { background-color: #25D366; }
+
+    /* Announcement Bar Gradient */
+    .announcement-bar {
+        background: linear-gradient(90deg, #ac8334, #f59e0b, #ac8334);
+        background-size: 200% 200%;
+        animation: gradientMove 10s ease infinite;
+    }
+    
+    /* Header Background */
+    .header-bg { background-color: #f3f4f6; }
+    
+    /* AI Search Button Glow (copied from indexlast exact style) */
+    .ai-search-glow {
+      position: relative;
+      z-index: 0;
+      overflow: hidden;
+      border-radius: 9999px; /* Rounded full */
+    }
+    .ai-search-glow::before {
+      content: '';
+      position: absolute;
+      z-index: -2;
+      left: -50%; top: -50%; width: 200%; height: 200%;
+      background-color: #399953;
+      background-repeat: no-repeat;
+      background-size: 50% 50%, 50% 50%;
+      background-position: 0 0, 100% 0, 100% 100%, 0 100%;
+      background-image: linear-gradient(#399953, #399953), linear-gradient(#fbb300, #fbb300), linear-gradient(#d53e33, #d53e33), linear-gradient(#377af5, #377af5);
+      animation: rotate 4s linear infinite;
+    }
+    .ai-search-glow::after {
+      content: '';
+      position: absolute;
+      z-index: -1;
+      left: 3px; top: 3px; width: calc(100% - 6px); height: calc(100% - 6px);
+      background: white;
+      border-radius: 9999px;
+    }
+
+    /* Horizontal Scrollers */
+    .horizontal-scroll {
+      display: flex; overflow-x: auto; gap: 1rem; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; padding-bottom: 1rem;
+    }
+    .horizontal-scroll > * { scroll-snap-align: start; flex: 0 0 48%; }
+    @media (min-width: 768px) {
+      .horizontal-scroll > * { flex: 0 0 20%; }
+    }
+
+    /* Animations */
+    @keyframes rotate { 100% { transform: rotate(1turn); } }
+    @keyframes gradientMove { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+
+    /* Discount Badge */
+    #discount-badge, .discount-badge { background: #ea580c !important; color: #ffffff !important; padding: 2px 6px !important; border-radius: 4px !important; }
+
+    /* Magnifier Lens */
+    .zoom-container { position: relative; overflow: hidden; display: block; border-radius: 12px; border: 1px solid #e5e7eb; }
+    .zoom-lens {
+        position: absolute; border: 2px solid #ea580c; border-radius: 50%;
+        width: 150px; height: 150px; pointer-events: none; opacity: 0; transition: opacity 0.2s;
+        background-repeat: no-repeat; box-shadow: 0 0 10px rgba(0,0,0,0.2); z-index: 50;
+    }
+
+    /* Sticky Footer for Mobile */
+    .sticky-mobile-footer {
+        position: fixed; bottom: 0; left: 0; right: 0; background: white;
+        padding: 12px; box-shadow: 0 -4px 6px -1px rgba(0,0,0,0.1); z-index: 50;
+        display: flex; gap: 10px;
+    }
+    @media(min-width: 768px) {
+        .sticky-mobile-footer { display: none; }
+        body { padding-bottom: 0; }
+    }
+
+    /* Breadcrumb: keep on a single line (no wrapping) and truncate if necessary */
+    nav .breadcrumb { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; flex-wrap: nowrap; gap: 0.5rem; align-items: center; }
+    nav .breadcrumb li { flex: 0 0 auto; }
+    nav .breadcrumb li a { white-space: nowrap; display: inline-block; }
+    @media (max-width: 420px) {
+      nav .breadcrumb { gap: 0.35rem; font-size: 0.95rem; }
+    }
+  </style>
+
+    <script type="application/ld+json" id="product-jsonld"></script>
+</head>
+
+<body class="bg-gray-50">
+
+<div class="announcement-bar w-full text-white text-xs md:text-sm text-center py-2 px-4 font-bold tracking-wide">
+  🎉 FREE Shipping on orders over Ksh 5000! | Limited Time Deals! 🚚
+</div>
+
+<header class="header-bg py-3 sticky top-0 z-40 shadow-sm">
+  <div class="max-w-7xl mx-auto px-3 relative">
+    <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <a href="index.html" class="flex-shrink-0 absolute left-1/2 transform -translate-x-1/2 md:static md:transform-none z-10">
+               <img src="images/sharkim_gold_logo.png" alt="Sharkim Logo" class="h-16 md:h-24 object-contain">
+          </a>
+        </div>
+
+        <div class="hidden md:flex flex-1 justify-center mx-12">
+            <div class="relative w-full max-w-2xl flex items-center gap-4">
+                <div class="relative flex-1">
+                    <input type="text" id="searchInputDesktop" placeholder="I am looking for..." class="w-full pl-5 pr-32 py-3 rounded-full border border-gray-300 focus:outline-none focus:border-[#ea580c] bg-white shadow-sm">
+                    <button id="searchBtnDesktop" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-[#ea580c]">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                    </button>
+                </div>
+                <button id="aiSearchDesktop" class="ai-search-glow px-6 py-3 bg-white text-[#1f2937] font-semibold rounded-full shadow-sm">
+                    Search with AI
+                </button>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-4">
+          <button id="cartBtn" class="relative text-gray-800 hover:text-[#ea580c] transition">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4h-2l-1 2H1v2h2l3.6 7.6-1.4 2.4c-.2.3-.2.8 0 1.2.2.4.6.6 1 .6h12v-2H7.4c-.1 0-.2 0-.2-.1l.9-1.5h7.9c.4 0 .7-.2.9-.5l3.6-6.5c.2-.4.1-.8 0-1.1-.2-.3-.5-.5-.9-.5H6.2L5.3 4H7zm0 16c-1.1 0-2 .9-2 2s.9 2 2 2c1.2 0 2-.9 2-2s-.8-2-2-2zm10 0c-1.1 0-2 .9-2 2s.9 2 2 2c1.2 0 2-.9 2-2s-.9-2-2-2z"/></svg>
+            <span id="cartCount" class="absolute -top-1 -right-2 bg-[#ea580c] text-white text-xs font-bold px-1.5 py-0.5 rounded-full">0</span>
+          </button>
+        </div>
+    </div>
+    
+    <div class="md:hidden mt-10 flex gap-2 w-full">
+         <div class="relative flex-grow">
+            <input type="text" id="searchInputMobile" placeholder="I am looking for..." class="w-full pl-3 pr-8 py-2.5 text-sm rounded-lg border border-gray-300 focus:outline-none focus:border-[#ea580c] bg-white">
+            <button id="searchBtnMobile" class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+            </button>
+         </div>
+          <button class="ai-search-glow px-3 py-2.5 text-xs font-bold text-gray-900 bg-white flex items-center gap-1 shadow-sm whitespace-nowrap" id="aiSearchMobile">
+         Search with AI
+          </button>
+    </div>
+  </div>
+</header>
+
+<nav class="bg-gray-100 border-b">
+  <div class="max-w-7xl mx-auto px-4 py-3 text-sm">
+    <ol class="flex items-center gap-2 text-gray-600">
+      <li><a href="index.html" class="hover:text-[#ea580c]">Home</a></li>
+      <li>›</li>
+      <li><a href="shop.html" class="hover:text-[#ea580c]">Shop</a></li>
+      <li id="bcCatWrapper" class="hidden">› <a id="bcCatLink" href="#"></a></li>
+      <li id="bcSubWrapper" class="hidden">› <a id="bcSubLink" href="#" class="text-[#ea580c] font-semibold"></a></li>
+    </ol>
+  </div>
+</nav>
+
+<main class="max-w-7xl mx-auto p-4 md:p-8 space-y-12">
+  
+  <div id="product-container" class="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12">
+      
+      <div class="flex flex-col gap-4">
+          <div class="zoom-container bg-white aspect-square flex items-center justify-center p-2 md:p-6 shadow-sm">
+              <img id="pImg" src="" alt="" class="w-full h-full object-contain cursor-crosshair">
+          </div>
+          <div id="thumbs" class="flex gap-3 overflow-x-auto pb-2 scrollbar-hide"></div>
+      </div>
+
+      <div class="flex flex-col gap-4">
+          
+          <div class="flex justify-between items-start gap-4">
+              <h1 id="pTitle" class="text-2xl md:text-4xl font-bold text-gray-900 leading-tight"></h1>
+              <button class="text-gray-400 hover:text-red-500 transition" title="Add to Wishlist">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                  </svg>
+              </button>
+          </div>
+
+          <div class="flex items-center gap-4 flex-wrap">
+               <div class="flex text-yellow-400 text-sm">
+                   <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                   <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                   <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                   <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                   <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M12 2l2.4 7.2h7.6l-6 4.8 2.4 7.2-6-4.8-6 4.8 2.4-7.2-6-4.8h7.6z"/></svg>
+               </div>
+               <span class="text-sm font-semibold text-green-600 bg-green-50 px-2 py-1 rounded">(45 sold so far)</span>
+          </div>
+
+          <div class="flex items-baseline gap-3 mt-1">
+              <span id="pPrice" class="text-4xl font-bold text-[#ea580c]"></span>
+              <span id="pOriginal" class="text-xl text-gray-400 line-through"></span>
+              <span id="pDisc" class="hidden bg-red-100 text-red-600 text-xs font-bold px-2 py-1 rounded"></span>
+          </div>
+
+          <div id="variantBox" class="hidden">
+            <label class="block text-sm font-semibold text-gray-700 mb-2">Select Option:</label>
+            <div id="variantOptions" class="flex flex-wrap gap-2"></div>
+          </div>
+
+          <div class="bg-gray-50 p-4 rounded-lg border border-gray-100 mt-2">
+              <h3 class="font-bold text-gray-800 mb-2">Key Features</h3>
+              <ul id="featuresList" class="list-disc list-inside text-gray-700 text-sm space-y-1.5 marker:text-[#ea580c]">
+                  </ul>
+          </div>
+
+          <div>
+              <div id="descText" class="text-gray-600 leading-relaxed text-sm overflow-hidden transition-all duration-300" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;"></div>
+              <button id="descToggle" class="text-[#ea580c] text-sm font-semibold hover:underline mt-1">Read More</button>
+          </div>
+
+          <div class="hidden md:flex gap-4 mt-4">
+              <button id="btnCartDesktop" class="flex-1 bg-white border-2 border-[#ea580c] text-[#ea580c] text-lg font-bold py-3 rounded-lg hover:bg-orange-50 transition shadow-sm">
+                  Add to Cart
+              </button>
+              <button id="btnBuyDesktop" class="flex-1 bg-[#ea580c] text-white text-lg font-bold py-3 rounded-lg hover:bg-orange-700 transition shadow-md">
+                  Buy Now
+              </button>
+          </div>
+
+          <div class="flex gap-4 text-xs text-gray-500 mt-2">
+              <div class="flex items-center gap-1">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                  Verified Quality
+              </div>
+              <div class="flex items-center gap-1">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                  Fast Delivery
+              </div>
+          </div>
+      </div>
+  </div>
+
+  <section class="border-t pt-8">
+      <h2 class="text-2xl font-bold text-gray-800 mb-6">See what other buyers are saying</h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="bg-white p-4 rounded-xl border shadow-sm">
+              <div class="flex items-center gap-2 mb-2">
+                  <div class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center font-bold text-gray-500">J</div>
+                  <div>
+                      <p class="text-sm font-bold">John K.</p>
+                      <div class="text-yellow-400 text-xs flex">★★★★★</div>
+                  </div>
+              </div>
+              <p class="text-gray-600 text-sm">"Excellent product! Delivered to Nairobi within 24 hours. Very happy with the quality."</p>
+          </div>
+          <div class="bg-white p-4 rounded-xl border shadow-sm">
+              <div class="flex items-center gap-2 mb-2">
+                  <div class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center font-bold text-gray-500">S</div>
+                  <div>
+                      <p class="text-sm font-bold">Sarah M.</p>
+                      <div class="text-yellow-400 text-xs flex">★★★★☆</div>
+                  </div>
+              </div>
+              <p class="text-gray-600 text-sm">"Worth the price. Customer service was very helpful when I had questions."</p>
+          </div>
+          <div class="bg-white p-4 rounded-xl border shadow-sm">
+              <div class="flex items-center gap-2 mb-2">
+                  <div class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center font-bold text-gray-500">D</div>
+                  <div>
+                      <p class="text-sm font-bold">David O.</p>
+                      <div class="text-yellow-400 text-xs flex">★★★★★</div>
+                  </div>
+              </div>
+              <p class="text-gray-600 text-sm">"Genuine item. Works exactly as described. Will buy again."</p>
+          </div>
+      </div>
+  </section>
+
+  <section>
+      <h2 class="text-xl md:text-2xl font-bold text-gray-800 mb-4 border-l-4 border-[#ea580c] pl-3">You May Also Like</h2>
+      <div id="relGrid" class="horizontal-scroll"></div>
+  </section>
+
+  <section>
+      <h2 class="text-xl md:text-2xl font-bold text-gray-800 mb-4 border-l-4 border-[#ea580c] pl-3">Customers Bought This Too</h2>
+      <div id="upsellGrid" class="horizontal-scroll"></div>
+  </section>
+
+</main>
+
+<div class="sticky-mobile-footer">
+    <button id="btnCartMobile" class="flex-1 bg-white border border-[#ea580c] text-[#ea580c] font-bold py-3 rounded shadow-sm">
+        Add to Cart
+    </button>
+    <button id="btnBuyMobile" class="flex-1 bg-[#ea580c] text-white font-bold py-3 rounded shadow-sm">
+        Buy Now
+    </button>
+</div>
+
+<footer class="bg-black text-gray-300 mt-10 pb-20 md:pb-0">
+  <div class="max-w-7xl mx-auto px-6 py-10 grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 items-start">
+    <div class="order-1">
+      <img src="images/sharkim_gold_logo.png" alt="Company Logo" class="h-24 mb-4 object-contain">
+      <p class="mb-2">WhatsApp Us: <a href="https://wa.me/254704843554" class="text-[#ac8334] font-medium">+254 704 843 554</a></p>
+    </div>
+    <div class="order-2 text-right">
+      <h3 class="text-lg font-semibold mb-3 text-white">Secure Payment</h3>
+      <div class="flex space-x-3 bg-white p-2 rounded justify-end inline-flex"> 
+          <img src="images/mpesa1.png" alt="MPESA" class="h-6 object-contain">
+      </div>
+      <p class="text-xs text-gray-500 mt-2">&copy; 2025 Sharkim Traders.</p>
+    </div>
+    <div class="order-3 text-right">
+        <h3 class="text-lg font-semibold mb-3 text-white">Quick Links</h3>
+        <ul class="space-y-2 text-sm text-right">
+          <li><a href="shop.html" class="hover:text-[#ac8334]">Shop All</a></li>
+          <li><a href="about.html" class="hover:text-[#ac8334]">About Us</a></li>
+          <li><a href="faq.html" class="hover:text-[#ac8334]">FAQ</a></li>
+        </ul>
+    </div>
+  </div>
+</footer>
+
+<script>
+// =====================
+// SUPABASE & CONFIG
+// =====================
+const SUPABASE_URL = 'https://evmiakneqtoxvnzeiwlz.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV2bWlha25lcXRveHZuemVpd2x6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzMTU4NTEsImV4cCI6MjA2OTg5MTg1MX0.lgW9OGAg8etuIzWPs-t0Ek_P7y3_m5GEo-ZSzbqbsGc';
+const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// =====================
+// DOM ELEMENTS
+// =====================
+const pImg = document.getElementById('pImg');
+const pTitle = document.getElementById('pTitle');
+const pPrice = document.getElementById('pPrice');
+const pOriginal = document.getElementById('pOriginal');
+const pDisc = document.getElementById('pDisc');
+const pThumbs = document.getElementById('thumbs');
+const featuresList = document.getElementById('featuresList');
+const descText = document.getElementById('descText');
+const descToggle = document.getElementById('descToggle');
+const variantBox = document.getElementById('variantBox');
+const variantOptions = document.getElementById('variantOptions');
+const relGrid = document.getElementById('relGrid');
+const upsellGrid = document.getElementById('upsellGrid');
+const cartCountBadge = document.getElementById('cartCount');
+
+const btns = {
+    cartDesktop: document.getElementById('btnCartDesktop'),
+    buyDesktop: document.getElementById('btnBuyDesktop'),
+    cartMobile: document.getElementById('btnCartMobile'),
+    buyMobile: document.getElementById('btnBuyMobile')
+};
+
+// =====================
+// CART LOGIC
+// =====================
+let cart = JSON.parse(localStorage.getItem('cart') || '[]');
+function saveCart(){ localStorage.setItem('cart', JSON.stringify(cart)); }
+function updateCartCount(){ if (cartCountBadge) cartCountBadge.innerText = cart.length; }
+updateCartCount();
+
+// =====================
+// UPDATED CART DRAWER STRUCTURE
+// =====================
+(function ensureCartDrawer(){
+  if (document.getElementById('cartDrawer')) return;
+  
+  const drawer = document.createElement('div');
+  drawer.id = 'cartDrawer';
+  drawer.className = 'fixed top-0 right-0 w-96 max-w-full h-full bg-white shadow-2xl z-[100] flex flex-col transition-transform transform translate-x-full duration-300'; 
+  
+  drawer.innerHTML = `
+    <div class="flex justify-between items-center p-5 border-b bg-gray-50">
+        <h2 class="text-xl font-bold text-gray-800">Your Cart</h2>
+        <button id="cartClose" class="text-gray-500 hover:text-red-500 transition">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+        </button>
+    </div>
+
+    <div id="cartItems" class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-100">
+        </div>
+
+    <div class="p-5 bg-white border-t shadow-[0_-5px_15px_rgba(0,0,0,0.05)]">
+      
+      <div class="flex justify-between items-end mb-1">
+          <span class="text-gray-600 font-medium">Total</span>
+          <span class="text-3xl font-extrabold text-[#ea580c]">Ksh <span id="cartTotal">0</span></span>
+      </div>
+      
+      <div id="cartSavingsArea" class="text-right mb-6 hidden">
+          <span class="text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded">You have saved: Ksh <span id="cartSavings">0</span></span>
+      </div>
+
+      <button id="proceedCheckoutBtn" class="w-full py-4 bg-[#ea580c] text-white text-lg font-bold rounded-xl hover:bg-orange-700 transition shadow-lg flex items-center justify-center gap-2">
+             Proceed to Checkout 
+             <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
+      </button>
+    </div>
+  `;
+  document.body.appendChild(drawer);
+
+  // Backdrop
+  const backdrop = document.createElement('div');
+  backdrop.id = 'cartBackdrop';
+  backdrop.className = 'fixed inset-0 bg-black bg-opacity-50 hidden z-[90] transition-opacity duration-300';
+  document.body.appendChild(backdrop);
+  
+  // Events
+  backdrop.onclick = closeCart;
+  document.getElementById('cartClose').onclick = closeCart;
+  document.getElementById('proceedCheckoutBtn').onclick = () => {
+    saveCart();
+    try {
+      const sessions = JSON.parse(localStorage.getItem('checkout_sessions') || '{}');
+      const sessionId = 's_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2,9);
+      let subtotal = 0; cart.forEach(it => subtotal += (Number(it.price||0) * (it.qty||1)));
+      sessions[sessionId] = { cart: cart, subtotal: subtotal, shippingCost: 0, shippingMethod: '', createdAt: Date.now() };
+      localStorage.setItem('checkout_sessions', JSON.stringify(sessions));
+      window.location.href = 'checkout.html?cart=' + encodeURIComponent(sessionId);
+    } catch(e) {
+      window.location.href = 'checkout.html';
+    }
+  };
+})();
+
+function openCart(){ 
+    renderCart(); 
+    const d = document.getElementById('cartDrawer');
+    d.classList.remove('hidden');
+    d.classList.remove('translate-x-full'); 
+    document.getElementById('cartBackdrop').classList.remove('hidden'); 
+}
+
+function closeCart(){ 
+    const d = document.getElementById('cartDrawer');
+    d.classList.add('translate-x-full');
+    document.getElementById('cartBackdrop').classList.add('hidden');
+}
+document.getElementById('cartBtn').onclick = openCart;
+
+function renderCart(){
+  const wrap = document.getElementById('cartItems');
+  const totalEl = document.getElementById('cartTotal');
+  const savingsEl = document.getElementById('cartSavings');
+  const savingsArea = document.getElementById('cartSavingsArea');
+  
+  wrap.innerHTML = '';
+  
+  let total = 0;
+  let totalSavings = 0;
+
+  if (cart.length === 0) { 
+      wrap.innerHTML = `
+        <div class="flex flex-col items-center justify-center h-full text-gray-400">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-16 h-16 mb-4 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+            <p>Your cart is empty</p>
+        </div>`; 
+      totalEl.innerText = '0'; 
+      if(savingsArea) savingsArea.classList.add('hidden');
+      return; 
+  }
+
+  cart.forEach((item, idx) => {
+    const qty = item.qty || 1;
+    const price = Number(item.price) || 0;
+    const origPrice = Number(item.original_price) || 0;
+    total += price * qty;
+    if(origPrice > price) totalSavings += (origPrice - price) * qty;
+
+    const row = document.createElement('div');
+    row.className = 'relative flex gap-3 bg-white p-3 rounded-xl border border-gray-200 shadow-sm';
+    row.innerHTML = `
+      <button onclick="removeFromCart(${idx})" class="absolute top-2 right-2 text-gray-300 hover:text-red-500 p-1">✕</button>
+      <div class="w-20 h-20 bg-white rounded-lg overflow-hidden flex-shrink-0 border border-gray-100">
+        <img src="${item.image_url}" class="w-full h-full object-contain" loading="lazy" alt="${item.title}">
+      </div>
+      <div class="flex-1 flex flex-col justify-between py-1">
+        <div>
+            <h4 class="font-bold text-sm text-gray-800 line-clamp-2 pr-6 leading-tight">${item.title}</h4>
+            <div class="mt-1">
+                ${item.variant ? `<div class="text-xs text-gray-500">${item.variant}</div>` : ''}
+                <span class="text-[#ea580c] font-bold text-base">Ksh ${price.toLocaleString()}</span>
+            </div>
+        </div>
+        <div class="flex items-center gap-3 mt-2">
+             <button onclick="updateQty(${idx}, -1)" class="w-7 h-7 flex items-center justify-center rounded-full bg-gray-100 text-gray-600">-</button>
+             <span class="font-bold text-gray-800 w-6 text-center text-sm">${qty}</span>
+             <button onclick="updateQty(${idx}, 1)" class="w-7 h-7 flex items-center justify-center rounded-full bg-gray-100 text-gray-600">+</button>
+        </div>
+      </div>
+    `;
+    wrap.appendChild(row);
+  });
+
+  totalEl.innerText = total.toLocaleString();
+  if(totalSavings > 0) { if(savingsEl) savingsEl.innerText = totalSavings.toLocaleString(); if(savingsArea) savingsArea.classList.remove('hidden'); }
+  else if(savingsArea) savingsArea.classList.add('hidden');
+}
+
+window.removeFromCart = (idx) => { cart.splice(idx, 1); saveCart(); updateCartCount(); renderCart(); };
+window.updateQty = (idx, change) => { if(cart[idx]){ cart[idx].qty = (cart[idx].qty||1)+change; if(cart[idx].qty<1) cart[idx].qty=1; saveCart(); renderCart(); }};
+
+function checkoutWhatsApp(){
+  if (cart.length === 0) return alert('Your cart is empty!');
+  let msg = '🛒 *New Order from Sharkim Traders*\n\n';
+  let total = 0; cart.forEach((item, i) => { const qty = item.qty||1; msg += `${i+1}. ${item.title} x${qty} - Ksh ${Number(item.price)*qty}\n`; total += Number(item.price||0)*qty; });
+  msg += `\n----------------------\n💰 *Total:* Ksh ${total}\n\n`;
+  msg += '📍 Please confirm delivery details.';
+  window.open(`https://wa.me/+254704843554?text=${encodeURIComponent(msg)}`, '_blank');
+}
+
+// =====================
+// ZOOM LOGIC
+// =====================
+function initMainImageZoom(){
+  const img = document.getElementById('pImg');
+  if (!img) return;
+  let container = img.closest('.zoom-container');
+  let lens = container.querySelector('.zoom-lens');
+  if (!lens){
+    lens = document.createElement('span');
+    lens.className = 'zoom-lens';
+    container.appendChild(lens);
+  }
+  
+  function updateLensBg(){ lens.style.backgroundImage = `url(${img.src})`; lens.style.backgroundSize = `${img.width * 2}px ${img.height * 2}px`; }
+  
+  // Update bg size on load and resize
+  img.onload = updateLensBg;
+  // Also delay slightly to ensure layout size
+  setTimeout(updateLensBg, 500);
+
+  function move(e){
+    e.preventDefault();
+    const rect = container.getBoundingClientRect();
+    const cx = e.touches ? e.touches[0].clientX : e.clientX;
+    const cy = e.touches ? e.touches[0].clientY : e.clientY;
+    
+    // Calculate position
+    let x = cx - rect.left; 
+    let y = cy - rect.top;
+
+    // Boundary check
+    if (x < 0) x = 0; if (x > rect.width) x = rect.width;
+    if (y < 0) y = 0; if (y > rect.height) y = rect.height;
+
+    // Move lens center to cursor
+    lens.style.left = (x - lens.offsetWidth/2) + 'px'; 
+    lens.style.top = (y - lens.offsetHeight/2) + 'px';
+    
+    // Move background image (opposite direction)
+    const px = (x / rect.width) * 100;
+    const py = (y / rect.height) * 100;
+    lens.style.backgroundPosition = `${px}% ${py}%`;
+  }
+
+  function enter(){ lens.style.opacity = '1'; updateLensBg(); }
+  function leave(){ lens.style.opacity = '0'; }
+
+  container.addEventListener('mousemove', move);
+  container.addEventListener('mouseenter', enter);
+  container.addEventListener('mouseleave', leave);
+  container.addEventListener('touchmove', move);
+  container.addEventListener('touchstart', enter);
+  container.addEventListener('touchend', leave);
+}
+
+
+// =====================
+// PRODUCT DATA FETCH
+// =====================
+function qs(){ return new URLSearchParams(window.location.search); }
+const productId = qs().get('id');
+
+async function fetchProduct(id){
+  const { data, error } = await client.from('Products').select('*').eq('id', id).single();
+  if (error || !data){ document.getElementById('product-container').innerHTML = '<p class="p-10 text-center">Product not found.</p>'; return; }
+  
+  const p = { ...data, main_category: data.main_category || data.category || 'Uncategorized' };
+
+  // 1. Basic Details
+  pImg.src = p.image_url;
+  initMainImageZoom();
+  pTitle.textContent = p.title;
+  pPrice.textContent = `Ksh ${p.price}`;
+  
+  if(p.original_price && p.original_price > p.price){
+      pOriginal.textContent = `Ksh ${p.original_price}`;
+      const disc = Math.round(((p.original_price - p.price)/p.original_price)*100);
+      pDisc.textContent = `-${disc}%`;
+      pDisc.classList.remove('hidden');
+  }
+
+  // 2. Thumbnails
+  loadThumbnails(p.image_url);
+
+  // 3. Features & Desc
+  const { features, desc } = normalizeFeatures(p.features, p.description || '');
+  if(features.length > 0) {
+      featuresList.innerHTML = features.map(f => `<li>${f}</li>`).join('');
+  } else {
+      featuresList.parentNode.classList.add('hidden');
+  }
+  
+  descText.textContent = desc || 'No description available.';
+  
+  // Toggle Description Logic
+  let isExpanded = false;
+  descToggle.onclick = () => {
+      isExpanded = !isExpanded;
+      if(isExpanded){
+          descText.style.webkitLineClamp = 'unset';
+          descToggle.textContent = 'Show Less';
+      } else {
+          descText.style.webkitLineClamp = '2';
+          descToggle.textContent = 'Read More';
+      }
+  };
+
+  // 4. Variants
+  setupVariants(p);
+
+  // 5. Buttons
+  const handleAddToCart = () => {
+     const selectedRadio = variantOptions?.querySelector('input[name="variant-size"]:checked');
+     const size = selectedRadio?.value || null;
+     const price = selectedRadio ? Number(selectedRadio.getAttribute('data-price')) : p.price;
+     const title = size ? `${p.title} (${size})` : p.title;
+     // Quantity-aware add: merge with existing item if same id+variant
+     const existing = cart.find(x => x.id == p.id && (x.variant || null) === (size || null));
+     if(existing) {
+       existing.qty = (existing.qty || 1) + 1;
+     } else {
+       cart.push({ id: p.id, title, price, image_url: p.image_url, variant: size, qty: 1 });
+     }
+     saveCart(); updateCartCount(); renderCart(); openCart();
+  };
+
+    const handleBuyNow = () => {
+      handleAddToCart();
+      // Persist cart and create a temporal session then navigate to checkout with session id
+      saveCart();
+      try {
+        const sessions = JSON.parse(localStorage.getItem('checkout_sessions') || '{}');
+        const sessionId = 's_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2,9);
+        let subtotal = 0; cart.forEach(it => subtotal += (Number(it.price||0) * (it.qty||1)));
+        sessions[sessionId] = { cart: cart, subtotal: subtotal, shippingCost: 0, shippingMethod: '', createdAt: Date.now() };
+        localStorage.setItem('checkout_sessions', JSON.stringify(sessions));
+        window.location.href = 'checkout.html?cart=' + encodeURIComponent(sessionId);
+      } catch(e) {
+        window.location.href = 'checkout.html';
+      }
+    };
+
+  btns.cartDesktop.onclick = handleAddToCart;
+  btns.cartMobile.onclick = handleAddToCart;
+  btns.buyDesktop.onclick = handleBuyNow;
+  btns.buyMobile.onclick = handleBuyNow;
+
+  // 6. JSON-LD
+  updateJSONLD(p);
+  
+  // 7. Breadcrumbs
+  const bcCat = document.getElementById('bcCatLink');
+  bcCat.textContent = p.main_category;
+  bcCat.href = `shop.html?main=${encodeURIComponent(p.main_category)}`;
+  document.getElementById('bcCatWrapper').classList.remove('hidden');
+
+  if(p.subcategory){
+      const bcSub = document.getElementById('bcSubLink');
+      bcSub.textContent = p.subcategory;
+      bcSub.href = `shop.html?main=${encodeURIComponent(p.main_category)}&sub=${encodeURIComponent(p.subcategory)}`;
+      document.getElementById('bcSubWrapper').classList.remove('hidden');
+  }
+
+  // 8. Related & Upsell
+  fetchRelated(p.main_category, p.id);
+  fetchUpsells();
+}
+
+// Helpers
+function parseFeatures(text){
+  let features = [];
+  let desc = text || '';
+  const start = desc.indexOf('[FEATURES]');
+  const end = desc.indexOf('[/FEATURES]');
+  if (start !== -1 && end !== -1 && end > start){
+    const inner = desc.substring(start + 10, end).trim();
+    features = inner.split(/\r?\n/).map(s => s.replace(/^[\-•]\s*/, '').trim()).filter(Boolean);
+    desc = (desc.slice(0, start) + desc.slice(end + 11)).trim();
+  }
+  return { features, desc };
+}
+
+function normalizeFeatures(featuresField, descriptionText){
+  if (Array.isArray(featuresField)){
+      return { features: featuresField.filter(Boolean), desc: descriptionText };
+  }
+  return parseFeatures(descriptionText);
+}
+
+// Thumbnails from storage (logic based on folder structure)
+async function loadThumbnails(imageUrl){
+  try{
+    const idx = imageUrl.indexOf('/product-images/');
+    if (idx === -1) return;
+    const path = imageUrl.substring(idx + '/product-images/'.length);
+    const parts = path.split('/');
+    if (parts.length <= 1) return;
+    parts.pop();
+    const folder = parts.join('/') + '/';
+    
+    const { data } = await client.storage.from('product-images').list(folder, { limit: 10 });
+    if (!data || data.length === 0) return;
+
+    pThumbs.innerHTML = '';
+    // Add original as first thumb
+    const mainThumb = document.createElement('img');
+    mainThumb.src = imageUrl;
+    mainThumb.className = "w-20 h-20 object-contain border hover:border-[#ea580c] cursor-pointer bg-white p-1 rounded";
+    mainThumb.onclick = () => { pImg.src = imageUrl; initMainImageZoom(); };
+    pThumbs.appendChild(mainThumb);
+
+    data.filter(f => !f.name.startsWith('.')).forEach(file => {
+      const url = `${SUPABASE_URL}/storage/v1/object/public/product-images/${folder}${file.name}`;
+      if(url === imageUrl) return; 
+      const img = document.createElement('img');
+      img.src = url;
+      img.className = "w-20 h-20 object-contain border hover:border-[#ea580c] cursor-pointer bg-white p-1 rounded";
+      img.onclick = () => { pImg.src = url; initMainImageZoom(); };
+      pThumbs.appendChild(img);
+    });
+  } catch(e){}
+}
+
+// Variants
+function setupVariants(prod){
+    // Simple heuristic for variants if not explicitly in DB
+    let variants = [];
+    if(prod.variants && Array.isArray(prod.variants)) variants = prod.variants;
+    // Fallback logic for demo
+    if(variants.length === 0 && (prod.main_category === 'Shoes' || prod.subcategory === 'Shoes')){
+        ['38','39','40','41','42','43','44'].forEach(s => variants.push({size: s, price: prod.price}));
+    }
+
+    if(variants.length === 0) return;
+
+    variantBox.classList.remove('hidden');
+    variantOptions.innerHTML = variants.map((v, i) => `
+      <label class="cursor-pointer">
+        <input type="radio" name="variant-size" value="${v.size}" data-price="${v.price}" ${i===0?'checked':''} class="peer sr-only">
+        <div class="px-3 py-1 border rounded text-sm peer-checked:bg-[#ea580c] peer-checked:text-white peer-checked:border-[#ea580c] hover:bg-gray-100 transition">
+            ${v.size}
+        </div>
+      </label>
+    `).join('');
+    
+    variantOptions.addEventListener('change', (e) => {
+        const p = e.target.getAttribute('data-price');
+        if(p) pPrice.textContent = `Ksh ${p}`;
+    });
+}
+
+// JSON-LD
+function updateJSONLD(prod) {
+  const jsonData = {
+    "@context": "https://schema.org/",
+    "@type": "Product",
+    "name": prod.title,
+    "image": [prod.image_url],
+    "description": prod.description,
+    "sku": String(prod.id),
+    "offers": {
+      "@type": "Offer",
+      "priceCurrency": "KES",
+      "price": String(prod.price),
+      "availability": "https://schema.org/InStock"
+    }
+  };
+  document.getElementById("product-jsonld").textContent = JSON.stringify(jsonData, null, 2);
+}
+
+// Related Products
+async function fetchRelated(category, currentId){
+    const { data } = await client.from('Products').select('*').eq('main_category', category).neq('id', currentId).limit(8);
+    renderGrid(data, relGrid);
+}
+
+// Upsells (Random mix for demo)
+async function fetchUpsells(){
+    const { data } = await client.from('Products').select('*').limit(8); // Just fetching random 8 for demo
+    if(data) renderGrid(data.reverse(), upsellGrid);
+}
+
+function renderGrid(products, container){
+    if(!products || products.length === 0) return;
+    container.innerHTML = '';
+    products.forEach(p => {
+    const el = document.createElement('a');
+    el.href = `product.html?id=${p.id}`;
+    el.className = 'block bg-white p-3 rounded shadow text-center min-w-[200px]';
+    el.innerHTML = `
+      <div class="h-64 w-full mb-3 flex items-center justify-center">
+        <img src="${p.image_url}" class="h-full object-contain mx-auto">
+      </div>
+      <h3 class="text-sm font-bold text-gray-800 line-clamp-2 mb-2">${p.title}</h3>
+      <p class="text-xs line-through text-gray-500">${p.original_price? 'Ksh ' + p.original_price : ''}</p>
+      <p class="text-[#ea580c] font-bold text-lg">Ksh ${p.price}</p>
+    `;
+    container.appendChild(el);
+    });
+}
+
+// Search Logic
+function handleSearch(id) {
+    const val = document.getElementById(id).value.trim();
+    if(val) window.location.href = `shop.html?q=${encodeURIComponent(val)}`;
+}
+document.getElementById('searchBtnDesktop')?.addEventListener('click', () => handleSearch('searchInputDesktop'));
+document.getElementById('searchBtnMobile')?.addEventListener('click', () => handleSearch('searchInputMobile'));
+document.getElementById('aiSearchDesktop')?.addEventListener('click', () => {
+  const inp = document.getElementById('searchInputDesktop');
+  if (inp.value.trim()) handleSearch('searchInputDesktop'); else inp.focus();
+});
+document.getElementById('aiSearchMobile')?.addEventListener('click', () => {
+  const inp = document.getElementById('searchInputMobile');
+  if (!inp) return;
+  if (inp.value.trim()) handleSearch('searchInputMobile'); else inp.focus();
+});
+
+if (productId) fetchProduct(productId);
+else document.getElementById('product-container').innerHTML = '<p class="p-10 text-center">No product selected.</p>';
+
+</script>
+</body>
+</html>

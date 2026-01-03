@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<script async src="https://www.googletagmanager.com/gtag/js?id=AW-17577238441"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'AW-17577238441');
+</script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/png" href="images/icon%20logo.png">
+  <title>Shop - Sharkim Traders</title>
+  
+  <script src="https://cdn.tailwindcss.com/"></script>
+  <script src="https://unpkg.com/@supabase/supabase-js"></script>
+  
+  <style>
+    html, body { max-width: 100%; overflow-x: hidden; font-family: "Times New Roman", Times, serif, Arial, Helvetica, sans-serif; }
+    img, svg { max-width: 100%; height: auto; }
+    
+    /* Brand Colors */
+    .brand-orange { color: #ea580c; } /* Deep Orange */
+    .bg-brand-orange { background-color: #ea580c; }
+    .brand-green { background-color: #25D366; } /* WhatsApp Green */
+
+    /* Header Background */
+    .header-bg { background-color: #f3f4f6; }
+    
+    /* Announcement Bar Gradient */
+    .announcement-bar {
+        background: linear-gradient(90deg, #ac8334, #f59e0b, #ac8334);
+        background-size: 200% 200%;
+        animation: gradientMove 10s ease infinite;
+    }
+
+    /* AI Search Button Glow */
+    .ai-search-glow {
+      position: relative;
+      z-index: 0;
+      overflow: hidden;
+      border-radius: 9999px; 
+    }
+    .ai-search-glow::before {
+      content: '';
+      position: absolute;
+      z-index: -2;
+      left: -50%; top: -50%; width: 200%; height: 200%;
+      background-color: #399953;
+      background-repeat: no-repeat;
+      background-size: 50% 50%, 50% 50%;
+      background-position: 0 0, 100% 0, 100% 100%, 0 100%;
+      background-image: linear-gradient(#399953, #399953), linear-gradient(#fbb300, #fbb300), linear-gradient(#d53e33, #d53e33), linear-gradient(#377af5, #377af5);
+      animation: rotate 4s linear infinite;
+    }
+    .ai-search-glow::after {
+      content: '';
+      position: absolute;
+      z-index: -1;
+      left: 3px; top: 3px; width: calc(100% - 6px); height: calc(100% - 6px);
+      background: white;
+      border-radius: 9999px;
+    }
+
+    /* Title Underline */
+    .title-underline {
+      position: relative;
+      display: inline-block;
+      padding-bottom: 8px;
+    }
+    .title-underline::after {
+      content: '';
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: -8px;
+      width: 120px;
+      height: 6px;
+      border-radius: 6px;
+      background: linear-gradient(90deg, #ac8334, #f59e0b, #ac8334);
+      background-size: 200% 100%;
+      animation: gradientMove 3s linear infinite;
+    }
+
+    /* Horizontal Scroll Snap */
+    .horizontal-scroll {
+      display: flex;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+      gap: 0.75rem; /* Reduced gap slightly for mobile compactness */
+      padding-bottom: 1rem;
+    }
+    /* Default scroll item width (overridden by specific classes below) */
+    .horizontal-scroll > * {
+      scroll-snap-align: start;
+      flex-shrink: 0;
+    }
+
+    /* 2 Items per screen on Mobile for Top Picks */
+    .mobile-two-items > * {
+        flex: 0 0 45%; /* Fits 2 items with gap */
+        width: 45%;
+    }
+    
+    /* Small tiles for Subcats on Mobile */
+    .mobile-small-tiles > * {
+        flex: 0 0 30%; /* Fits ~3 small tiles */
+        width: 30%;
+    }
+
+    @media (min-width: 768px) {
+      .horizontal-scroll {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        overflow-x: visible;
+        gap: 1rem;
+      }
+      .horizontal-scroll > * { flex: auto; width: auto; }
+      
+      /* Reset override classes on desktop */
+      .mobile-two-items > *, .mobile-small-tiles > * { flex: auto; width: auto; }
+    }
+
+    /* Custom Price Range Slider */
+    .range-slider { position: relative; height: 5px; background: #ddd; border-radius: 5px; margin-top: 10px; margin-bottom: 20px; }
+    .range-selected { height: 100%; left: 0%; right: 0%; position: absolute; border-radius: 5px; background: #ea580c; }
+    .range-input { position: relative; }
+    .range-input input {
+      position: absolute; width: 100%; height: 5px; top: -7px; background: none; pointer-events: none;
+      -webkit-appearance: none; -moz-appearance: none;
+    }
+    .range-input input::-webkit-slider-thumb {
+      height: 18px; width: 18px; border-radius: 50%; border: 2px solid #ea580c; background: #fff;
+      pointer-events: auto; -webkit-appearance: none; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    }
+    .range-input input::-moz-range-thumb {
+      height: 18px; width: 18px; border: none; border-radius: 50%; background: #ea580c;
+      pointer-events: auto; -moz-appearance: none; cursor: pointer;
+    }
+
+    /* Scrollbar for Filter Sidebar */
+    .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+    /* Pop Out Card Hover */
+    .pop-out-card { transition: transform 0.3s ease, box-shadow 0.3s ease; }
+    .pop-out-card:hover { transform: translateY(-5px); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); }
+    
+    .discount-badge { background: #ea580c !important; color: #ffffff !important; padding: 2px 6px !important; border-radius: 4px !important; }
+
+    /* Animations */
+    @keyframes rotate { 100% { transform: rotate(1turn); } }
+    @keyframes gradientMove { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+  </style>
+</head>
+
+<body class="bg-gray-100">
+
+<div class="announcement-bar w-full text-white text-xs md:text-sm text-center py-2 px-4 font-bold tracking-wide">
+  🎉 FREE Shipping on orders over Ksh 5000! | Limited Time Deals! 🚚
+</div>
+
+<header class="header-bg py-3 sticky top-0 z-40 shadow-sm">
+  <div class="max-w-7xl mx-auto px-3 relative">
+    <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <button id="mobileMenuBtn" class="md:hidden text-gray-800">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
+          </button>
+          <a href="index.html" class="flex-shrink-0 absolute left-1/2 transform -translate-x-1/2 md:static md:transform-none z-10">
+            <img src="images/sharkim_gold_logo.png" alt="Sharkim Logo" class="h-16 md:h-24 object-contain" width="240" height="96">
+          </a>
+        </div>
+
+        <div class="hidden md:flex flex-1 justify-center mx-12">
+            <div class="relative w-full max-w-3xl flex items-center gap-4">
+                <div class="relative flex-1">
+                    <input type="text" id="searchInputDesktop" placeholder="I am looking for..." class="w-full pl-5 pr-32 py-3 rounded-full border border-gray-300 focus:outline-none focus:border-[#ea580c] bg-white shadow-sm">
+                    <button id="searchBtnDesktop" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-[#ea580c]">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                    </button>
+                </div>
+                <div class="flex-shrink-0">
+                  <button id="aiSearchDesktop" class="ai-search-glow px-6 py-3 bg-white text-[#1f2937] font-semibold rounded-full shadow-sm">
+                    Search with AI
+                  </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <button id="cartBtn" class="relative text-gray-800 hover:text-[#ea580c] transition">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4h-2l-1 2H1v2h2l3.6 7.6-1.4 2.4c-.2.3-.2.8 0 1.2.2.4.6.6 1 .6h12v-2H7.4c-.1 0-.2 0-.2-.1l.9-1.5h7.9c.4 0 .7-.2.9-.5l3.6-6.5c.2-.4.1-.8 0-1.1-.2-.3-.5-.5-.9-.5H6.2L5.3 4H7zm0 16c-1.1 0-2 .9-2 2s.9 2 2 2c1.2 0 2-.9 2-2s-.8-2-2-2zm10 0c-1.1 0-2 .9-2 2s.9 2 2 2c1.2 0 2-.9 2-2s-.9-2-2-2z"/></svg>
+            <span id="cartCount" class="absolute -top-1 -right-2 bg-[#ea580c] text-white text-xs font-bold px-1.5 py-0.5 rounded-full">0</span>
+          </button>
+        </div>
+    </div>
+
+    <div class="md:hidden mt-10 flex gap-2 w-full">
+         <div class="relative flex-grow">
+            <input type="text" id="searchInputMobile" placeholder="I am looking for..." class="w-full pl-3 pr-8 py-2.5 text-sm rounded-lg border border-gray-300 focus:outline-none focus:border-[#ea580c] bg-white">
+            <button id="searchBtnMobile" class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+            </button>
+         </div>
+         <button class="ai-search-glow px-3 py-2.5 text-xs font-bold text-gray-900 bg-white flex items-center gap-1 shadow-sm whitespace-nowrap" id="aiSearchMobile">
+           Search with AI
+         </button>
+    </div>
+  </div>
+</header>
+
+<div id="mobileMenuDrawer" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-black bg-opacity-50" id="mobileMenuBackdrop"></div>
+    <div class="absolute top-0 left-0 w-3/4 max-w-sm h-full bg-white shadow-xl flex flex-col transform transition-transform duration-300">
+        <div class="p-4 flex justify-between items-center border-b">
+            <h2 class="text-xl font-bold text-[#ea580c]">Categories</h2>
+            <button id="closeMobileMenu" class="text-gray-600">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+        </div>
+        <ul id="mobileMenuListItems" class="p-4 space-y-2 overflow-y-auto flex-1"></ul>
+    </div>
+</div>
+
+<main class="max-w-7xl mx-auto px-3 py-8 space-y-12">
+
+    <div class="text-center">
+        <h1 class="text-3xl md:text-4xl font-bold text-gray-900 mb-2"><span id="pageTitle" class="title-underline">Shop</span></h1>
+        <p class="text-gray-500 mt-4" id="pageSubtitle">Browse our collection</p>
+    </div>
+
+    <section id="topPicksSection">
+        <h2 class="text-2xl font-bold text-left mb-4 text-[#ea580c]">Top Picks</h2>
+        <div class="space-y-4">
+             <div class="horizontal-scroll mobile-two-items" id="topPicksRow1"></div>
+             <div class="horizontal-scroll mobile-two-items md:hidden" id="topPicksRow2"></div>
+        </div>
+    </section>
+
+    <section id="subCatsSection">
+        <h2 class="text-xl font-bold text-left mb-6 text-gray-800">Browse by Subcategory</h2>
+        <div class="hidden md:grid md:grid-cols-6 gap-4" id="subCatsDesktopGrid"></div>
+        
+        <div class="md:hidden space-y-3">
+             <div class="horizontal-scroll mobile-small-tiles" id="subCatsMobileRow1"></div>
+             <div class="horizontal-scroll mobile-small-tiles" id="subCatsMobileRow2"></div>
+             <div class="horizontal-scroll mobile-small-tiles" id="subCatsMobileRow3"></div>
+        </div>
+    </section>
+
+    <section class="flex flex-col md:flex-row gap-8 items-start pt-6 border-t border-gray-200">
+        
+        <aside class="w-full md:w-1/4 bg-white p-5 rounded-xl shadow-sm border border-gray-100 md:sticky md:top-24">
+            <div class="flex justify-between items-center mb-4">
+                 <h3 class="font-bold text-lg text-gray-800" id="filterTitle">Filters</h3>
+                 <button id="resetFilters" class="text-xs text-red-500 hover:underline">Reset</button>
+            </div>
+            
+            <div class="mb-6">
+                <h4 class="font-bold text-sm text-[#ea580c] mb-2 uppercase">Subcategories</h4>
+                <div class="max-h-60 overflow-y-auto custom-scrollbar space-y-2 pr-2" id="filterSubcatList">
+                    <p class="text-sm text-gray-400">Select a main category first.</p>
+                </div>
+            </div>
+
+            <div class="mb-6">
+                 <h4 class="font-bold text-sm text-[#ea580c] mb-1 uppercase">Price Range (Ksh)</h4>
+                 <p class="text-xs text-gray-500 mb-3 italic">Slide to adjust</p>
+                 
+                 <div class="range-slider">
+                     <div class="range-selected" id="sliderRange"></div>
+                 </div>
+                 <div class="range-input">
+                     <input type="range" class="min-range" id="rangeMin" min="0" max="100000" value="0" step="100">
+                     <input type="range" class="max-range" id="rangeMax" min="0" max="100000" value="100000" step="100">
+                 </div>
+
+                 <div class="flex items-center justify-between gap-2 mt-4">
+                     <div class="w-1/2">
+                         <label class="text-xs text-gray-500">Min</label>
+                         <input type="number" id="inputMin" class="w-full border border-gray-300 rounded px-2 py-1 text-sm focus:border-[#ea580c] outline-none">
+                     </div>
+                     <div class="w-1/2 text-right">
+                         <label class="text-xs text-gray-500">Max</label>
+                         <input type="number" id="inputMax" class="w-full border border-gray-300 rounded px-2 py-1 text-sm focus:border-[#ea580c] outline-none text-right">
+                     </div>
+                 </div>
+            </div>
+
+            <button id="applyFiltersBtn" class="w-full bg-[#ea580c] text-white font-bold py-3 rounded-lg hover:bg-orange-700 transition shadow-md">
+                APPLY FILTERS
+            </button>
+        </aside>
+
+        <div class="w-full md:w-3/4">
+            <div class="flex items-center justify-between mb-4">
+                <span class="text-sm text-gray-500" id="resultCount">Showing all products</span>
+                <select id="sortSelect" class="border border-gray-300 rounded p-1 text-sm bg-white">
+                    <option value="newest">Newest First</option>
+                    <option value="price_asc">Price: Low to High</option>
+                    <option value="price_desc">Price: High to Low</option>
+                </select>
+            </div>
+
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4" id="mainProductGrid">
+                <div class="col-span-full text-center py-20">
+                    <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#ea580c] mx-auto"></div>
+                </div>
+            </div>
+        </div>
+
+    </section>
+
+</main>
+
+<footer class="bg-black text-gray-300 mt-10">
+  <div class="max-w-7xl mx-auto px-6 py-10 grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
+    <div class="order-1">
+      <img src="images/sharkim_gold_logo.png" alt="Company Logo" class="h-24 mb-4 object-contain" width="200" height="80">
+      <p class="mb-2">WhatsApp Us: <a href="https://wa.me/254704843554" class="text-[#ac8334] font-medium">+254 704 843 554</a></p>
+      <p class="mb-2">Call Us: <a href="tel:+254704843554" class="text-white font-medium">+254 704 843 554</a></p>
+      <p class="mb-2">Email Us: <a href="mailto:sharkimtraders97@gmail.com" class="text-[#ac8334] font-medium">sharkimtraders97@gmail.com</a></p>
+      <p class="text-sm text-gray-400">Time: 8:30AM - 6:30PM</p>
+    </div>
+
+    <div class="order-2 flex justify-center md:justify-center">
+      <div class="w-full md:w-64">
+        <h3 class="text-lg font-semibold mb-3 text-white text-left md:text-left">Quick Links</h3>
+        <ul class="space-y-2 text-sm mb-6 text-left">
+          <li><a href="index.html" class="hover:text-[#ac8334]">Home</a></li>
+          <li><a href="shop.html" class="hover:text-[#ac8334]">Shop</a></li>
+          <li><a href="about.html" class="hover:text-[#ac8334]">About Us</a></li>
+          <li><a href="faq.html" class="hover:text-[#ac8334]">FAQ</a></li>
+          <li><a href="contact.html" class="hover:text-[#ac8334]">Contact</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="order-3 text-right md:text-right">
+      <h3 class="text-lg font-semibold mb-3 text-white">Working Hours</h3>
+      <p class="mb-1">Monday - Saturday: <span class="font-medium">08:30 - 18:30</span></p>
+      <p class="mb-3">Sunday: <span class="text-red-500">Closed</span></p>
+
+      <h3 class="text-lg font-semibold mb-3 text-white">Payments</h3>
+      <div class="flex space-x-3 bg-white p-2 rounded justify-end"> <img src="images/mpesa1.png" alt="MPESA" class="h-8 object-contain">
+        <img src="images/im-bank.png" alt="I&M Bank" class="h-8 object-contain">
+        <img src="images/equity.png" alt="Equity Bank" class="h-8 object-contain">
+      </div>
+    </div>
+  </div>
+  <div class="bg-black text-[#ac8334] text-center py-3 mt-6 border-t border-gray-800">
+    <p class="text-sm">&copy; 2025 Sharkim Traders. All rights reserved.</p>
+  </div>
+</footer>
+
+<script src="js/categories.js"></script>
+<script>
+// =====================
+// SUPABASE CONFIG
+// =====================
+const SUPABASE_URL = 'https://evmiakneqtoxvnzeiwlz.supabase.co/';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV2bWlha25lcXRveHZuemVpd2x6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzMTU4NTEsImV4cCI6MjA2OTg5MTg1MX0.lgW9OGAg8etuIzWPs-t0Ek_P7y3_m5GEo-ZSzbqbsGc';
+const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// =====================
+// GLOBAL VARIABLES
+// =====================
+let allProducts = [];
+let categoryProducts = []; 
+let currentMainCategory = '';
+let currentSubCategory = '';
+let minPriceLimit = 0;
+let maxPriceLimit = 100000;
+
+// =====================
+// INITIALIZATION
+// =====================
+async function init() {
+    const urlParams = new URLSearchParams(window.location.search);
+    currentMainCategory = urlParams.get('main') || '';
+    const searchQ = urlParams.get('q');
+
+    const { data, error } = await client.from('Products').select('*');
+    if (error) { console.error("Error fetching:", error); return; }
+    
+    allProducts = (data || []).map(p => ({
+        ...p,
+        main_category: p.main_category || p.category || 'Uncategorized',
+        subcategory: p.sub_category || p.subcategory || ''
+    }));
+
+    if(searchQ) {
+        document.getElementById('pageTitle').innerText = `Search: "${searchQ}"`;
+        document.getElementById('pageSubtitle').innerText = "Results matching your search";
+        categoryProducts = allProducts.filter(p => p.title.toLowerCase().includes(searchQ.toLowerCase()));
+        document.getElementById('subCatsSection').style.display = 'none';
+        document.getElementById('topPicksSection').style.display = 'none';
+        document.getElementById('filterTitle').innerText = "Refine Search";
+    } 
+    else if (currentMainCategory) {
+        document.getElementById('pageTitle').innerText = currentMainCategory;
+        document.getElementById('filterTitle').innerText = currentMainCategory;
+        categoryProducts = allProducts.filter(p => p.main_category === currentMainCategory);
+    } else {
+        document.getElementById('pageTitle').innerText = "All Products";
+        document.getElementById('filterTitle').innerText = "All Categories";
+        categoryProducts = allProducts;
+        document.getElementById('subCatsSection').style.display = 'none'; 
+    }
+
+    setupPriceRangeLimits();
+    renderTopPicks();
+    if(currentMainCategory && !searchQ) renderSubCategoryCards();
+    renderFilterSidebar();
+    applyFilters();
+}
+
+// =====================
+// TOP PICKS
+// =====================
+function renderTopPicks() {
+    const row1 = document.getElementById('topPicksRow1');
+    const row2 = document.getElementById('topPicksRow2');
+    row1.innerHTML = ''; row2.innerHTML = '';
+
+    const picks = [...categoryProducts].sort(() => 0.5 - Math.random()).slice(0, 10);
+    
+    if(picks.length === 0) {
+        document.getElementById('topPicksSection').style.display = 'none';
+        return;
+    }
+
+    picks.forEach((p, i) => {
+        const card = renderProductCard(p);
+        if(window.innerWidth < 768) {
+             if(i < 5) row1.appendChild(card);
+             else row2.appendChild(card);
+        } else {
+             row1.appendChild(card);
+        }
+    });
+}
+
+// If a subcategory image loads but is too small on mobile, replace it with the main logo
+function checkImageSize(img) {
+  try {
+    if (img.__sh_check_done) return;
+    // mark to avoid repeated replacement loops
+    img.__sh_check_done = true;
+    if (window.innerWidth < 768) {
+      var nw = img.naturalWidth || 0;
+      var nh = img.naturalHeight || 0;
+      if (nw > 0 && nh > 0) {
+        // if the actual image is very small, use site logo instead
+        if (Math.max(nw, nh) < 120) {
+          img.src = 'images/sharkim_gold_logo.png';
+        }
+      } else {
+        // if not loaded yet, retry shortly
+        setTimeout(function(){
+          try { if(!img.__sh_check_done) checkImageSize(img); }
+          catch(e){}
+        }, 200);
+      }
+    }
+  } catch(e) {}
+}
+
+// =====================
+// SUBCATEGORY CARDS
+// =====================
+function renderSubCategoryCards() {
+    const subcats = window.getSubcategories(currentMainCategory) || [];
+    const desktopGrid = document.getElementById('subCatsDesktopGrid');
+    const mRow1 = document.getElementById('subCatsMobileRow1');
+    const mRow2 = document.getElementById('subCatsMobileRow2');
+    const mRow3 = document.getElementById('subCatsMobileRow3');
+
+    if(subcats.length === 0) {
+        document.getElementById('subCatsSection').style.display = 'none';
+        return;
+    }
+
+    subcats.forEach((sub, index) => {
+      const repProduct = categoryProducts.find(p => p.subcategory === sub);
+      const imgUrl = (repProduct && repProduct.image_url) ? repProduct.image_url : 'images/sharkim_gold_logo.png';
+        
+        // Common Card Logic: Image above, text below. 
+        // We use classes like 'h-16' for mobile tiles to keep them small.
+        const card = document.createElement('div');
+        // Mobile style base (small tiles) -> Desktop style (larger) via md classes
+        card.className = "flex flex-col items-center cursor-pointer group";
+
+        card.innerHTML = `
+              <div class="w-full h-16 md:h-32 rounded-lg overflow-hidden border border-gray-200 shadow-sm relative bg-white">
+                <img src="${imgUrl}" onerror="this.onerror=null;this.src='images/sharkim_gold_logo.png';" onload="checkImageSize(this)" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" loading="lazy" alt="${sub}">
+              </div>
+            <span class="mt-1 md:mt-2 text-[10px] md:text-sm font-bold text-gray-700 text-center leading-tight group-hover:text-[#ea580c] px-1">${sub}</span>
+        `;
+        
+        card.onclick = () => { selectSubCategory(sub); };
+
+        // Desktop
+        desktopGrid.appendChild(card.cloneNode(true)); // Clone for desktop grid
+
+        // Mobile
+        const mobileCard = card.cloneNode(true);
+        mobileCard.onclick = () => { selectSubCategory(sub); }; // Re-attach listener
+        
+        if (index % 3 === 0) mRow1.appendChild(mobileCard);
+        else if (index % 3 === 1) mRow2.appendChild(mobileCard);
+        else mRow3.appendChild(mobileCard);
+    });
+}
+
+// =====================
+// SIDEBAR FILTERS
+// =====================
+function setupPriceRangeLimits() {
+    if(categoryProducts.length === 0) return;
+    const prices = categoryProducts.map(p => Number(p.price) || 0);
+    minPriceLimit = Math.min(...prices);
+    maxPriceLimit = Math.max(...prices);
+
+    const rangeMin = document.getElementById('rangeMin');
+    const rangeMax = document.getElementById('rangeMax');
+    const inputMin = document.getElementById('inputMin');
+    const inputMax = document.getElementById('inputMax');
+
+    rangeMin.min = minPriceLimit; rangeMin.max = maxPriceLimit; rangeMin.value = minPriceLimit;
+    rangeMax.min = minPriceLimit; rangeMax.max = maxPriceLimit; rangeMax.value = maxPriceLimit;
+    inputMin.value = minPriceLimit;
+    inputMax.value = maxPriceLimit;
+
+    updateSliderTrack();
+}
+
+function renderFilterSidebar() {
+    const list = document.getElementById('filterSubcatList');
+    list.innerHTML = '';
+    
+    const subcats = window.getSubcategories(currentMainCategory) || [];
+    
+    const allOpt = document.createElement('div');
+    allOpt.className = "flex items-center gap-2 cursor-pointer p-1 hover:bg-gray-50 rounded";
+    allOpt.innerHTML = `<input type="radio" name="subcatFilter" value="" checked class="accent-[#ea580c]"> <span class="text-sm text-gray-700">All Subcategories</span>`;
+    allOpt.onclick = () => { selectSubCategory(''); document.querySelector('input[value=""]').checked = true; };
+    list.appendChild(allOpt);
+
+    subcats.forEach(sub => {
+        const div = document.createElement('div');
+        div.className = "flex items-center gap-2 cursor-pointer p-1 hover:bg-gray-50 rounded";
+        div.innerHTML = `<input type="radio" name="subcatFilter" value="${sub}" class="accent-[#ea580c]"> <span class="text-sm text-gray-700">${sub}</span>`;
+        div.onclick = () => { 
+            div.querySelector('input').checked = true;
+            selectSubCategory(sub); 
+        };
+        list.appendChild(div);
+    });
+}
+
+function selectSubCategory(sub) {
+    currentSubCategory = sub;
+    const radios = document.getElementsByName('subcatFilter');
+    radios.forEach(r => { if(r.value === sub) r.checked = true; });
+    applyFilters();
+    if(window.innerWidth < 768) document.getElementById('mainProductGrid').scrollIntoView({behavior: 'smooth'});
+}
+
+function applyFilters() {
+    const minP = Number(document.getElementById('inputMin').value);
+    const maxP = Number(document.getElementById('inputMax').value);
+    const sortVal = document.getElementById('sortSelect').value;
+
+    let filtered = categoryProducts.filter(p => {
+        if(currentSubCategory && p.subcategory !== currentSubCategory) return false;
+        const price = Number(p.price) || 0;
+        if(price < minP || price > maxP) return false;
+        return true;
+    });
+
+    if(sortVal === 'price_asc') filtered.sort((a,b) => (Number(a.price) - Number(b.price)));
+    else if(sortVal === 'price_desc') filtered.sort((a,b) => (Number(b.price) - Number(a.price)));
+    else if(sortVal === 'newest') filtered.sort((a,b) => b.id - a.id);
+
+    renderMainGrid(filtered);
+}
+
+function renderMainGrid(products) {
+    const grid = document.getElementById('mainProductGrid');
+    const countEl = document.getElementById('resultCount');
+    grid.innerHTML = '';
+    countEl.innerText = `Showing ${products.length} products`;
+
+    if(products.length === 0) {
+        grid.innerHTML = `<div class="col-span-full text-center py-10 text-gray-500">No products found matching your filters.</div>`;
+        return;
+    }
+
+    products.forEach(p => {
+        grid.appendChild(renderProductCard(p));
+    });
+}
+
+// =====================
+// CARD RENDERER
+// =====================
+function renderProductCard(product) {
+  const disc = (product.original_price && product.original_price > product.price)
+    ? Math.round(((product.original_price - product.price)/product.original_price)*100) : 0;
+  
+  const el = document.createElement('div');
+  // Removed fixed widths here, controlled by parent container (grid or horizontal-scroll)
+  el.className = `bg-white p-4 rounded-xl shadow-sm border border-gray-100 relative flex flex-col pop-out-card`;
+
+  el.innerHTML = `
+    <a href="product.html?id=${encodeURIComponent(product.id)}" class="block mb-3 relative h-40 md:h-52 overflow-hidden rounded-lg flex items-center justify-center p-2 bg-white">
+      <img src="${product.image_url}" class="w-full h-full object-contain hover:scale-105 transition duration-300" loading="lazy" alt="${product.title}">
+      ${disc ? `<span class="discount-badge absolute top-0 left-0 text-[10px] font-bold">-${disc}%</span>` : ''}
+    </a>
+    
+    <div class="flex-1 flex flex-col">
+        <h3 class="text-sm font-bold text-gray-800 line-clamp-2 leading-tight mb-1 h-10">${product.title}</h3>
+        <div class="mb-2">
+            ${product.original_price ? `<span class="text-xs text-gray-400 line-through mr-1">Ksh ${product.original_price}</span>` : ''}
+            <span class="text-base font-bold text-[#ea580c]">Ksh ${product.price}</span>
+        </div>
+        
+        <div class="mt-auto flex flex-col gap-2">
+            <button onclick="addToCart('${product.id}')" class="w-full py-1.5 border border-gray-200 bg-white text-gray-800 text-xs font-bold rounded hover:bg-gray-50 hover:text-[#ea580c] transition">
+                ADD TO CART
+            </button>
+            
+            <button onclick="buyNow('${product.id}')" class="w-full py-1.5 bg-[#ea580c] text-white text-xs font-bold rounded text-center hover:bg-orange-700 transition">
+              BUY NOW
+            </button>
+        </div>
+    </div>
+  `;
+  return el;
+}
+
+// =====================
+// CART LOGIC
+// =====================
+let cart = JSON.parse(localStorage.getItem('cart') || '[]');
+const cartCountBadge = document.getElementById('cartCount');
+
+function saveCart(){ localStorage.setItem('cart', JSON.stringify(cart)); }
+function updateCartCount(){ 
+    if (cartCountBadge) cartCountBadge.innerText = cart.length; 
+}
+// =====================
+// UPDATED ADD TO CART (Handles Quantity)
+// =====================
+window.addToCart = (id) => {
+  // 1. Find product in allProducts
+  const p = allProducts.find(x => x.id == id);
+  if(p) {
+    // 2. Check if already in cart
+    const existingItem = cart.find(x => x.id == id);
+    if(existingItem) {
+      existingItem.qty = (existingItem.qty || 1) + 1;
+    } else {
+      // 3. Add new with qty 1
+      cart.push({ ...p, qty: 1 });
+    }
+        
+    saveCart(); 
+    updateCartCount(); 
+    renderCart(); // Update drawer immediately if open
+        
+    // Visual Feedback on Button
+    const btn = document.activeElement; 
+    if(btn && (btn.innerText.includes('CART') || btn.innerText.includes('Add'))) {
+      const old = btn.innerHTML || btn.innerText; 
+      btn.innerHTML = '✔ Added';
+      setTimeout(() => {
+        // attempt to restore previous text
+        if(old) btn.innerHTML = old;
+      }, 1000);
+    }
+  }
+};
+
+// Quick buy: add item to cart then go to checkout
+window.buyNow = (id) => {
+  const p = allProducts.find(x => x.id == id);
+  if(p) {
+    const existing = cart.find(x => x.id == id);
+    if(existing) existing.qty = (existing.qty || 1) + 1;
+    else cart.push({ ...p, qty: 1 });
+    saveCart();
+    updateCartCount();
+    // Create a temporal checkout session and redirect with session id
+    try {
+      const sessions = JSON.parse(localStorage.getItem('checkout_sessions') || '{}');
+      const sessionId = 's_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2,9);
+      let subtotal = 0;
+      cart.forEach(it => subtotal += (Number(it.price||0) * (it.qty||1)));
+      sessions[sessionId] = { cart: cart, subtotal: subtotal, shippingCost: 0, shippingMethod: '', createdAt: Date.now() };
+      localStorage.setItem('checkout_sessions', JSON.stringify(sessions));
+      window.location.href = 'checkout.html?cart=' + encodeURIComponent(sessionId);
+    } catch(e) {
+      window.location.href = 'checkout.html';
+    }
+  } else {
+    // If product list not yet loaded, fallback: navigate with id param
+    window.location.href = 'checkout.html?id=' + encodeURIComponent(id);
+  }
+};
+
+// =====================
+// UPDATED CART DRAWER STRUCTURE
+// =====================
+(function ensureCartDrawer(){
+  if (document.getElementById('cartDrawer')) return;
+  
+  const drawer = document.createElement('div');
+  drawer.id = 'cartDrawer';
+  drawer.className = 'fixed top-0 right-0 w-96 max-w-full h-full bg-white shadow-2xl z-[100] flex flex-col transition-transform transform translate-x-full duration-300'; 
+  
+  // Note: Added translate-x-full for sliding animation class control
+  
+  drawer.innerHTML = `
+    <div class="flex justify-between items-center p-5 border-b bg-gray-50">
+        <h2 class="text-xl font-bold text-gray-800">Your Cart</h2>
+        <button id="cartClose" class="text-gray-500 hover:text-red-500 transition">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+        </button>
+    </div>
+
+    <div id="cartItems" class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-100">
+        </div>
+
+    <div class="p-5 bg-white border-t shadow-[0_-5px_15px_rgba(0,0,0,0.05)]">
+      
+      <div class="flex justify-between items-end mb-1">
+          <span class="text-gray-600 font-medium">Total</span>
+          <span class="text-3xl font-extrabold text-[#ea580c]">Ksh <span id="cartTotal">0</span></span>
+      </div>
+      
+      <div id="cartSavingsArea" class="text-right mb-6 hidden">
+          <span class="text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded">You have saved: Ksh <span id="cartSavings">0</span></span>
+      </div>
+
+      <button id="proceedCheckoutBtn" class="w-full py-4 bg-[#ea580c] text-white text-lg font-bold rounded-xl hover:bg-orange-700 transition shadow-lg flex items-center justify-center gap-2">
+             Proceed to Checkout 
+             <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
+      </button>
+    </div>
+  `;
+  document.body.appendChild(drawer);
+
+  // Backdrop
+  const backdrop = document.createElement('div');
+  backdrop.id = 'cartBackdrop';
+  backdrop.className = 'fixed inset-0 bg-black bg-opacity-50 hidden z-[90] transition-opacity duration-300';
+  document.body.appendChild(backdrop);
+  
+    // Events
+    backdrop.onclick = closeCart;
+    document.getElementById('cartClose').onclick = closeCart;
+    document.getElementById('proceedCheckoutBtn').onclick = () => {
+      // Ensure cart saved then create a session and navigate to checkout with session id
+      saveCart();
+      try {
+        const sessions = JSON.parse(localStorage.getItem('checkout_sessions') || '{}');
+        const sessionId = 's_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2,9);
+        let subtotal = 0; cart.forEach(it => subtotal += (Number(it.price||0) * (it.qty||1)));
+        sessions[sessionId] = { cart: cart, subtotal: subtotal, shippingCost: 0, shippingMethod: '', createdAt: Date.now() };
+        localStorage.setItem('checkout_sessions', JSON.stringify(sessions));
+        window.location.href = 'checkout.html?cart=' + encodeURIComponent(sessionId);
+      } catch(e) {
+        window.location.href = 'checkout.html';
+      }
+    };
+})();
+
+// =====================
+// UPDATED RENDER CART (New Design)
+// =====================
+function renderCart(){
+  const wrap = document.getElementById('cartItems');
+  const totalEl = document.getElementById('cartTotal');
+  const savingsEl = document.getElementById('cartSavings');
+  const savingsArea = document.getElementById('cartSavingsArea');
+  
+  wrap.innerHTML = '';
+  
+  let total = 0;
+  let totalSavings = 0;
+
+  if (cart.length === 0) { 
+      wrap.innerHTML = `
+        <div class="flex flex-col items-center justify-center h-full text-gray-400">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-16 h-16 mb-4 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+            <p>Your cart is empty</p>
+        </div>`; 
+      totalEl.innerText = '0'; 
+      savingsArea.classList.add('hidden');
+      return; 
+  }
+
+  cart.forEach((item, idx) => {
+    const qty = item.qty || 1;
+    const price = Number(item.price) || 0;
+    const origPrice = Number(item.original_price) || 0;
+    total += price * qty;
+    if(origPrice > price) totalSavings += (origPrice - price) * qty;
+
+    const row = document.createElement('div');
+    row.className = 'relative flex gap-3 bg-white p-3 rounded-xl border border-gray-200 shadow-sm';
+    row.innerHTML = `
+      <button onclick="removeFromCart(${idx})" class="absolute top-2 right-2 text-gray-300 hover:text-red-500 p-1">✕</button>
+      <div class="w-20 h-20 bg-white rounded-lg overflow-hidden flex-shrink-0 border border-gray-100">
+        <img src="${item.image_url}" class="w-full h-full object-contain" loading="lazy" alt="${item.title}">
+      </div>
+      <div class="flex-1 flex flex-col justify-between py-1">
+        <div>
+            <h4 class="font-bold text-sm text-gray-800 line-clamp-2 pr-6 leading-tight">${item.title}</h4>
+            <div class="mt-1">
+                ${origPrice > price ? `<span class="text-xs text-gray-400 line-through mr-2">Ksh ${origPrice.toLocaleString()}</span>` : ''}
+                <span class="text-[#ea580c] font-bold text-base">Ksh ${price.toLocaleString()}</span>
+            </div>
+        </div>
+        <div class="flex items-center gap-3 mt-2">
+             <button onclick="updateQty(${idx}, -1)" class="w-7 h-7 flex items-center justify-center rounded-full bg-gray-100 text-gray-600">-</button>
+             <span class="font-bold text-gray-800 w-6 text-center text-sm">${qty}</span>
+             <button onclick="updateQty(${idx}, 1)" class="w-7 h-7 flex items-center justify-center rounded-full bg-gray-100 text-gray-600">+</button>
+        </div>
+      </div>
+    `;
+    wrap.appendChild(row);
+  });
+
+  totalEl.innerText = total.toLocaleString();
+  if(totalSavings > 0) { savingsEl.innerText = totalSavings.toLocaleString(); savingsArea.classList.remove('hidden'); }
+  else savingsArea.classList.add('hidden');
+}
+
+window.removeFromCart = (idx) => { cart.splice(idx,1); saveCart(); updateCartCount(); renderCart(); };
+window.updateQty = (idx, change) => { if(cart[idx]){ cart[idx].qty = (cart[idx].qty||1)+change; if(cart[idx].qty<1) cart[idx].qty=1; saveCart(); renderCart(); }};
+
+function openCart(){ renderCart(); const d=document.getElementById('cartDrawer'); d.classList.remove('hidden'); d.classList.remove('translate-x-full'); document.getElementById('cartBackdrop').classList.remove('hidden'); }
+function closeCart(){ const d=document.getElementById('cartDrawer'); d.classList.add('translate-x-full'); document.getElementById('cartBackdrop').classList.add('hidden'); }
+
+function checkoutWhatsApp(){
+  if (cart.length === 0) return alert('Your cart is empty!');
+  let msg = '🛒 *New Order from Sharkim Traders*\n\n';
+  let total = 0; cart.forEach((item, i) => { const qty = item.qty||1; msg += `${i+1}. ${item.title} x${qty} - Ksh ${Number(item.price)*qty}\n`; total += Number(item.price||0)*qty; });
+  msg += `\n----------------------\n💰 *Total:* Ksh ${total}\n\n`;
+  msg += '📍 Please confirm delivery details.';
+  window.open(`https://wa.me/+254704843554?text=${encodeURIComponent(msg)}`, '_blank');
+}
+
+function checkoutEmail(){
+  if (cart.length === 0) return alert('Your cart is empty!');
+  let subject = '🛒 New Cart Order - Sharkim Traders';
+  let body = 'Hello Sharkim Traders,\n\nI\'d like to order the following products:\n\n';
+  let total = 0; cart.forEach((item, i) => { const qty = item.qty||1; body += `${i+1}. ${item.title} x${qty} - Ksh ${Number(item.price)*qty}\n`; total += Number(item.price||0)*qty; });
+  body += `\n----------------------\nTotal: Ksh ${total}\n\n`;
+  body += 'Customer details:\nName: __________\nPhone: __________\nLocation: __________';
+  window.location.href = `mailto:sharkimtraders97@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+}
+updateCartCount();
+// Ensure cart button opens the drawer
+const shopCartBtn = document.getElementById('cartBtn');
+if (shopCartBtn) shopCartBtn.onclick = openCart;
+
+// =====================
+// PRICE SLIDER UX
+// =====================
+const rangeMin = document.getElementById('rangeMin');
+const rangeMax = document.getElementById('rangeMax');
+const inputMin = document.getElementById('inputMin');
+const inputMax = document.getElementById('inputMax');
+const sliderRange = document.getElementById('sliderRange');
+const priceGap = 100;
+
+function updateSliderTrack() {
+    const min = parseInt(rangeMin.value), max = parseInt(rangeMax.value);
+    const percent1 = ((min - rangeMin.min) / (rangeMin.max - rangeMin.min)) * 100;
+    const percent2 = ((max - rangeMax.min) / (rangeMax.max - rangeMax.min)) * 100;
+    sliderRange.style.left = percent1 + "%";
+    sliderRange.style.right = (100 - percent2) + "%";
+}
+
+[rangeMin, rangeMax].forEach(input => {
+    input.addEventListener('input', (e) => {
+        let minVal = parseInt(rangeMin.value), maxVal = parseInt(rangeMax.value);
+        if((maxVal - minVal) < priceGap) {
+            if(e.target.className === "min-range") rangeMin.value = maxVal - priceGap;
+            else rangeMax.value = minVal + priceGap;
+        } else {
+            inputMin.value = minVal; inputMax.value = maxVal;
+            updateSliderTrack();
+        }
+    });
+});
+
+[inputMin, inputMax].forEach(input => {
+    input.addEventListener('change', (e) => {
+        let minVal = parseInt(inputMin.value), maxVal = parseInt(inputMax.value);
+        if((maxVal - minVal >= priceGap) && maxVal <= parseInt(rangeMax.max) && minVal >= parseInt(rangeMin.min)) {
+            rangeMin.value = minVal; rangeMax.value = maxVal;
+            updateSliderTrack();
+        }
+    });
+});
+
+// =====================
+// EVENTS
+// =====================
+document.getElementById('applyFiltersBtn').addEventListener('click', applyFilters);
+document.getElementById('resetFilters').addEventListener('click', () => {
+    currentSubCategory = '';
+    setupPriceRangeLimits(); 
+    const radios = document.getElementsByName('subcatFilter');
+    if(radios.length) radios[0].checked = true;
+    applyFilters();
+});
+document.getElementById('sortSelect').addEventListener('change', applyFilters);
+
+// Mobile Menu
+const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+const mobileMenuDrawer = document.getElementById('mobileMenuDrawer');
+const mobileMenuBackdrop = document.getElementById('mobileMenuBackdrop');
+const closeMobileMenu = document.getElementById('closeMobileMenu');
+const mobileMenuListItems = document.getElementById('mobileMenuListItems');
+
+function toggleMobileMenu() { mobileMenuDrawer.classList.toggle('hidden'); }
+if(mobileMenuBtn) mobileMenuBtn.addEventListener('click', toggleMobileMenu);
+if(closeMobileMenu) closeMobileMenu.addEventListener('click', toggleMobileMenu);
+if(mobileMenuBackdrop) mobileMenuBackdrop.addEventListener('click', toggleMobileMenu);
+
+function buildMobileMenu(){
+  mobileMenuListItems.innerHTML = '';
+  (window.MAIN_CATEGORIES || []).forEach(cat => {
+    const li = document.createElement('li');
+    li.innerHTML = `<a class="block px-4 py-3 rounded-lg text-gray-700 font-medium hover:bg-gray-100 hover:text-[#ea580c] transition" href="shop.html?main=${encodeURIComponent(cat)}">${cat}</a>`;
+    mobileMenuListItems.appendChild(li);
+  });
+}
+setTimeout(buildMobileMenu, 500);
+
+function handleSearch(id) {
+    const val = document.getElementById(id).value.trim();
+    if(val) window.location.href = `shop.html?q=${encodeURIComponent(val)}`;
+}
+document.getElementById('searchBtnDesktop').addEventListener('click', () => handleSearch('searchInputDesktop'));
+document.getElementById('searchBtnMobile').addEventListener('click', () => handleSearch('searchInputMobile'));
+
+// Init
+init();
+</script>
+</body>
+</html>
