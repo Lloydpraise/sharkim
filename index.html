@@ -163,6 +163,12 @@
 
     /* Utilities */
     #discount-badge, .discount-badge { background: #ea580c !important; color: #ffffff !important; padding: 2px 6px !important; border-radius: 4px !important; }
+    /* Price layout: keep actual price on its own line on small screens */
+    .product-price-row { display:inline-flex; align-items:baseline; gap:0.25rem; flex-wrap:wrap; }
+    .product-price-row .price-actual { font-weight:700; color: #ea580c; }
+    @media (max-width:640px) {
+      .product-price-row .price-actual { flex-basis:100%; }
+    }
   </style>
   <link rel="preload" as="image" href="images/Banner.png" imagesrcset="images/Banner.png 1200w" imagesizes="100vw">
 </head>
@@ -259,7 +265,7 @@
             </div>
         </div>
            <div class="carousel-slide">
-             <img src="https://via.placeholder.com/1200x600/1f2937/ffffff?text=Electronics+Sale" class="w-full h-full object-cover" alt="Banner 2" width="1200" height="600" loading="lazy" decoding="async">
+             <img src="images/Banner 2.webp" class="w-full h-full object-cover" alt="Banner 2" width="1200" height="600" loading="lazy" decoding="async">
              <div class="absolute bottom-8 left-0 w-full flex flex-col items-center">
                 <h2 class="text-3xl md:text-5xl font-bold text-white mb-4 drop-shadow-md">Best Electronics</h2>
                 <a href="shop.html" class="px-8 py-3 bg-[#ea580c] text-white font-bold rounded-full hover:bg-orange-700 transition shadow-md">View Offers</a>
@@ -616,15 +622,17 @@ function renderCart(){
       </button>
 
       <div class="w-20 h-20 bg-white rounded-lg overflow-hidden flex-shrink-0 border border-gray-100">
-        <img src="${item.image_url}" class="w-full h-full object-contain" loading="lazy" alt="${item.title}">
+        <img src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" data-src="${item.image_url}" class="w-full h-full object-contain" loading="lazy" alt="${item.title}"
+          srcset="${item.image_url.replace(/\.(jpg|jpeg|png)$/i, '-small.$1')} 300w, ${item.image_url} 600w" sizes="80px"
+          onerror="this.onerror=null; this.src='images/sharkim_gold_logo.png'; this.srcset='';">
       </div>
 
       <div class="flex-1 flex flex-col justify-between py-1">
         <div>
             <h4 class="font-bold text-sm text-gray-800 line-clamp-2 pr-6 leading-tight">${item.title}</h4>
-            <div class="mt-1">
-                ${origPrice > price ? `<span class="text-xs text-gray-400 line-through mr-2">Ksh ${origPrice.toLocaleString()}</span>` : ''}
-                <span class="text-[#ea580c] font-bold text-base">Ksh ${price.toLocaleString()}</span>
+            <div class="mt-1 product-price-row">
+              ${origPrice > price ? `<span class="text-xs text-gray-400 line-through mr-2">Ksh ${origPrice.toLocaleString()}</span>` : ''}
+              <span class="price-actual">Ksh ${price.toLocaleString()}</span>
             </div>
         </div>
 
@@ -711,7 +719,8 @@ function distributeProducts(products){
       el.className = "flex flex-col group";
       el.innerHTML = `
         <div class="overflow-hidden rounded-xl h-40 md:h-56 mb-2 border border-gray-100 shadow-sm">
-          <img src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" data-src="${img}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" decoding="async" alt="${cat}" width="600" height="400">
+          <img src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" data-src="${img}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" decoding="async" alt="${cat}" width="600" height="400"
+          onerror="this.onerror=null; this.src='images/sharkim_gold_logo.png'; this.srcset='';">
         </div>
         <span class="text-center font-bold text-gray-800 group-hover:text-[#ea580c]">${cat}</span>
       `;
@@ -731,7 +740,8 @@ function distributeProducts(products){
          el.className = "flex flex-col items-center group";
          el.innerHTML = `
           <div class="w-20 h-20 md:w-28 md:h-28 rounded-full shadow-md overflow-hidden mb-2 border-2 border-transparent group-hover:border-[#ea580c] transition">
-            <img src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" data-src="${img}" class="w-full h-full object-cover" decoding="async" alt="${cat}" width="150" height="150">
+            <img src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" data-src="${img}" class="w-full h-full object-cover" decoding="async" alt="${cat}" width="150" height="150"
+            onerror="this.onerror=null; this.src='images/sharkim_gold_logo.png'; this.srcset='';">
           </div>
             <span class="text-xs md:text-sm font-semibold text-center text-gray-800 group-hover:text-[#ea580c]">${cat}</span>
          `;
@@ -796,15 +806,18 @@ function renderCard(product, isPopOut){
 
       el.innerHTML = `
     <a href="product.html?id=${encodeURIComponent(product.id)}" class="block mb-3 relative h-48 md:h-64 overflow-hidden rounded-lg flex items-center justify-center p-2 bg-white">
-      <img src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" data-src="${product.image_url}" class="w-full h-full object-contain hover:scale-105 transition duration-300" decoding="async" alt="${product.title}" width="600" height="400">
+      <img src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" data-src="${product.image_url}" class="w-full h-full object-contain hover:scale-105 transition duration-300" decoding="async" alt="${product.title}" width="600" height="400"
+        srcset="${product.image_url} 600w, ${product.image_url.replace(/\.(jpg|jpeg|png)$/i, '-small.$1')} 300w"
+        sizes="(max-width:640px) 90vw, 25vw"
+        onerror="this.onerror=null; this.src='images/sharkim_gold_logo.png'; this.srcset='';">
       ${disc ? `<span class="discount-badge absolute top-0 left-0 text-[10px] font-bold">-${disc}%</span>` : ''}
     </a>
     
     <div class="flex-1 flex flex-col">
         <h3 class="text-sm font-bold text-gray-800 line-clamp-2 leading-tight mb-1 h-12">${product.title}</h3>
-        <div class="mb-2">
-            ${product.original_price ? `<span class="text-xs text-gray-400 line-through mr-1">Ksh ${product.original_price}</span>` : ''}
-            <span class="text-base font-bold text-[#ea580c]">Ksh ${product.price}</span>
+        <div class="mb-2 product-price-row">
+          ${product.original_price ? `<span class="text-xs text-gray-400 line-through mr-1">Ksh ${product.original_price}</span>` : ''}
+          <span class="text-base price-actual">Ksh ${product.price}</span>
         </div>
         
         <div class="mt-auto flex flex-col gap-2">
@@ -812,8 +825,8 @@ function renderCard(product, isPopOut){
                 ADD TO CART
             </button>
             
-            <a href="https://wa.me/+254704843554?text=${encodeURIComponent('Hi, I want to buy: ' + product.title + ' @ Ksh ' + product.price)}" target="_blank" class="w-full py-1.5 bg-[#ea580c] text-white text-xs font-bold rounded text-center hover:bg-orange-700 transition">
-                BUY NOW
+            <a href="checkout.html?id=${encodeURIComponent(product.id)}" class="w-full py-1.5 bg-[#ea580c] text-white text-xs font-bold rounded text-center hover:bg-orange-700 transition">
+              BUY NOW
             </a>
         </div>
     </div>
@@ -832,6 +845,19 @@ function enhanceImages(){
         else img.setAttribute('loading', 'lazy');
       }
       if (!img.hasAttribute('alt')) img.setAttribute('alt', '');
+      // If image has a data-src (used by our lazyloader), add a small hint and srcset
+      const dataSrc = img.dataset && (img.dataset.src || img.getAttribute('src'));
+      if (dataSrc) {
+        try {
+          const m = dataSrc.match(/\.(jpg|jpeg|png)$/i);
+          if (m) {
+            const small = dataSrc.replace(/\.(jpg|jpeg|png)$/i, '-small.$1');
+            // only add data-src-small if not already present
+            if (!img.dataset.srcsmall) img.dataset.srcsmall = small;
+            if (!img.getAttribute('srcset')) img.setAttribute('srcset', `${small} 300w, ${dataSrc} 600w`);
+          }
+        } catch(e){}
+      }
     } catch(e) { /* ignore for odd SVGs */ }
   });
 }

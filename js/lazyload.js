@@ -18,7 +18,12 @@
     try {
       const src = img.getAttribute('src') || '';
       if (!src) return;
+      // prefer to load a smaller variant first if available/guessable
+      let small = '';
+      try { small = src.replace(/\.(jpg|jpeg|png)$/i, '-small.$1'); } catch(e){}
       img.setAttribute('data-src', src);
+      if (small && small !== src) img.dataset.srcsmall = small;
+      // set minimal placeholder to avoid large downloads
       img.setAttribute('src', placeholder);
       img.classList.add('lazy-img');
       img.setAttribute('decoding', 'async');
@@ -29,8 +34,17 @@
     if (!img || !img.dataset) return;
     const src = img.dataset.src;
     if (!src) return;
+    const srcSmall = img.dataset.srcsmall;
     img.removeAttribute('data-src');
-    img.src = src;
+    // Try the small image first, then fallback to full-size if it errors
+    if (srcSmall) {
+      img.onerror = function(){
+        try { img.onerror = null; img.src = src; } catch(e){}
+      };
+      img.src = srcSmall;
+    } else {
+      img.src = src;
+    }
     img.classList.remove('lazy-img');
     try { img.setAttribute('decoding','async'); } catch(e){}
   }
