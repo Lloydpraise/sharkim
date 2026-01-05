@@ -338,518 +338,420 @@
 </footer>
 
 <script>
-// =====================
-// SUPABASE & CONFIG
-// =====================
-const SUPABASE_URL = 'https://evmiakneqtoxvnzeiwlz.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV2bWlha25lcXRveHZuemVpd2x6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzMTU4NTEsImV4cCI6MjA2OTg5MTg1MX0.lgW9OGAg8etuIzWPs-t0Ek_P7y3_m5GEo-ZSzbqbsGc';
+    // 1. SETUP
+   // 1. CONFIGURATION
+const SUPABASE_URL = 'https://ljxvxbjhkgoeygpyejkc.supabase.co/';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxqeHZ4Ympoa2dvZXlncHllamtjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc1ODE3MzMsImV4cCI6MjA4MzE1NzczM30.fBrwtnv89UHgjs523rKCODE5W4nfBmDsP0AUQ8NgBlU';
 const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// =====================
-// DOM ELEMENTS
-// =====================
-const pImg = document.getElementById('pImg');
-const pTitle = document.getElementById('pTitle');
-const pPrice = document.getElementById('pPrice');
-const pOriginal = document.getElementById('pOriginal');
-const pDisc = document.getElementById('pDisc');
-const pThumbs = document.getElementById('thumbs');
-const featuresList = document.getElementById('featuresList');
-const descText = document.getElementById('descText');
-const descToggle = document.getElementById('descToggle');
-const variantBox = document.getElementById('variantBox');
-const variantOptions = document.getElementById('variantOptions');
-const relGrid = document.getElementById('relGrid');
-const upsellGrid = document.getElementById('upsellGrid');
-const cartCountBadge = document.getElementById('cartCount');
+    // Get ID from URL
+    const params = new URLSearchParams(window.location.search);
+    const productId = params.get('id');
 
-const btns = {
-    cartDesktop: document.getElementById('btnCartDesktop'),
-    buyDesktop: document.getElementById('btnBuyDesktop'),
-    cartMobile: document.getElementById('btnCartMobile'),
-    buyMobile: document.getElementById('btnBuyMobile')
-};
+    async function loadProduct() {
+        if (!productId) return;
 
-// =====================
-// CART LOGIC
-// =====================
-let cart = JSON.parse(localStorage.getItem('cart') || '[]');
-function saveCart(){ localStorage.setItem('cart', JSON.stringify(cart)); }
-function updateCartCount(){ if (cartCountBadge) cartCountBadge.innerText = cart.length; }
-updateCartCount();
+        // 2. FETCH MAIN PRODUCT (Including Embedding!)
+        const { data: product, error } = await client
+            .from('products')
+            .select('*, embedding') 
+            .eq('id', productId)
+            .single();
 
-// =====================
-// UPDATED CART DRAWER STRUCTURE
-// =====================
-(function ensureCartDrawer(){
-  if (document.getElementById('cartDrawer')) return;
-  
-  const drawer = document.createElement('div');
-  drawer.id = 'cartDrawer';
-  drawer.className = 'fixed top-0 right-0 w-96 max-w-full h-full bg-white shadow-2xl z-[100] flex flex-col transition-transform transform translate-x-full duration-300'; 
-  
-  drawer.innerHTML = `
-    <div class="flex justify-between items-center p-5 border-b bg-gray-50">
-        <h2 class="text-xl font-bold text-gray-800">Your Cart</h2>
-        <button id="cartClose" class="text-gray-500 hover:text-red-500 transition">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
-        </button>
-    </div>
+        if (error || !product) {
+            document.body.innerHTML = "<h1 class='text-center mt-10'>Product not found</h1>";
+            return;
+        }
 
-    <div id="cartItems" class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-100">
-        </div>
-
-    <div class="p-5 bg-white border-t shadow-[0_-5px_15px_rgba(0,0,0,0.05)]">
-      
-      <div class="flex justify-between items-end mb-1">
-          <span class="text-gray-600 font-medium">Total</span>
-          <span class="text-3xl font-extrabold text-[#ea580c]">Ksh <span id="cartTotal">0</span></span>
-      </div>
-      
-      <div id="cartSavingsArea" class="text-right mb-6 hidden">
-          <span class="text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded">You have saved: Ksh <span id="cartSavings">0</span></span>
-      </div>
-
-      <button id="proceedCheckoutBtn" class="w-full py-4 bg-[#ea580c] text-white text-lg font-bold rounded-xl hover:bg-orange-700 transition shadow-lg flex items-center justify-center gap-2">
-             Proceed to Checkout 
-             <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
-      </button>
-    </div>
-  `;
-  document.body.appendChild(drawer);
-
-  // Backdrop
-  const backdrop = document.createElement('div');
-  backdrop.id = 'cartBackdrop';
-  backdrop.className = 'fixed inset-0 bg-black bg-opacity-50 hidden z-[90] transition-opacity duration-300';
-  document.body.appendChild(backdrop);
-  
-  // Events
-  backdrop.onclick = closeCart;
-  document.getElementById('cartClose').onclick = closeCart;
-  document.getElementById('proceedCheckoutBtn').onclick = () => {
-    saveCart();
-    try {
-      const sessions = JSON.parse(localStorage.getItem('checkout_sessions') || '{}');
-      const sessionId = 's_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2,9);
-      let subtotal = 0; cart.forEach(it => subtotal += (Number(it.price||0) * (it.qty||1)));
-      sessions[sessionId] = { cart: cart, subtotal: subtotal, shippingCost: 0, shippingMethod: '', createdAt: Date.now() };
-      localStorage.setItem('checkout_sessions', JSON.stringify(sessions));
-      window.location.href = 'checkout.html?cart=' + encodeURIComponent(sessionId);
-    } catch(e) {
-      window.location.href = 'checkout.html';
+        renderMainProduct(product);
+        loadRelatedProducts(product.embedding, product.id);
     }
-  };
-})();
 
-function openCart(){ 
-    renderCart(); 
-    const d = document.getElementById('cartDrawer');
-    d.classList.remove('hidden');
-    d.classList.remove('translate-x-full'); 
-    document.getElementById('cartBackdrop').classList.remove('hidden'); 
-}
-
-function closeCart(){ 
-    const d = document.getElementById('cartDrawer');
-    d.classList.add('translate-x-full');
-    document.getElementById('cartBackdrop').classList.add('hidden');
-}
-document.getElementById('cartBtn').onclick = openCart;
-
-function renderCart(){
-  const wrap = document.getElementById('cartItems');
-  const totalEl = document.getElementById('cartTotal');
-  const savingsEl = document.getElementById('cartSavings');
-  const savingsArea = document.getElementById('cartSavingsArea');
-  
-  wrap.innerHTML = '';
-  
-  let total = 0;
-  let totalSavings = 0;
-
-  if (cart.length === 0) { 
-      wrap.innerHTML = `
-        <div class="flex flex-col items-center justify-center h-full text-gray-400">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-16 h-16 mb-4 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
-            <p>Your cart is empty</p>
-        </div>`; 
-      totalEl.innerText = '0'; 
-      if(savingsArea) savingsArea.classList.add('hidden');
-      return; 
-  }
-
-  cart.forEach((item, idx) => {
-    const qty = item.qty || 1;
-    const price = Number(item.price) || 0;
-    const origPrice = Number(item.original_price) || 0;
-    total += price * qty;
-    if(origPrice > price) totalSavings += (origPrice - price) * qty;
-
-    const row = document.createElement('div');
-    row.className = 'relative flex gap-3 bg-white p-3 rounded-xl border border-gray-200 shadow-sm';
-    row.innerHTML = `
-      <button onclick="removeFromCart(${idx})" class="absolute top-2 right-2 text-gray-300 hover:text-red-500 p-1">✕</button>
-      <div class="w-20 h-20 bg-white rounded-lg overflow-hidden flex-shrink-0 border border-gray-100">
-        <img src="${item.image_url}" class="w-full h-full object-contain" loading="lazy" alt="${item.title}">
-      </div>
-      <div class="flex-1 flex flex-col justify-between py-1">
-        <div>
-            <h4 class="font-bold text-sm text-gray-800 line-clamp-2 pr-6 leading-tight">${item.title}</h4>
-            <div class="mt-1">
-                ${item.variant ? `<div class="text-xs text-gray-500">${item.variant}</div>` : ''}
-                <span class="text-[#ea580c] font-bold text-base">Ksh ${price.toLocaleString()}</span>
-            </div>
-        </div>
-        <div class="flex items-center gap-3 mt-2">
-             <button onclick="updateQty(${idx}, -1)" class="w-7 h-7 flex items-center justify-center rounded-full bg-gray-100 text-gray-600">-</button>
-             <span class="font-bold text-gray-800 w-6 text-center text-sm">${qty}</span>
-             <button onclick="updateQty(${idx}, 1)" class="w-7 h-7 flex items-center justify-center rounded-full bg-gray-100 text-gray-600">+</button>
-        </div>
-      </div>
-    `;
-    wrap.appendChild(row);
-  });
-
-  totalEl.innerText = total.toLocaleString();
-  if(totalSavings > 0) { if(savingsEl) savingsEl.innerText = totalSavings.toLocaleString(); if(savingsArea) savingsArea.classList.remove('hidden'); }
-  else if(savingsArea) savingsArea.classList.add('hidden');
-}
-
-window.removeFromCart = (idx) => { cart.splice(idx, 1); saveCart(); updateCartCount(); renderCart(); };
-window.updateQty = (idx, change) => { if(cart[idx]){ cart[idx].qty = (cart[idx].qty||1)+change; if(cart[idx].qty<1) cart[idx].qty=1; saveCart(); renderCart(); }};
-
-function checkoutWhatsApp(){
-  if (cart.length === 0) return alert('Your cart is empty!');
-  let msg = '🛒 *New Order from Sharkim Traders*\n\n';
-  let total = 0; cart.forEach((item, i) => { const qty = item.qty||1; msg += `${i+1}. ${item.title} x${qty} - Ksh ${Number(item.price)*qty}\n`; total += Number(item.price||0)*qty; });
-  msg += `\n----------------------\n💰 *Total:* Ksh ${total}\n\n`;
-  msg += '📍 Please confirm delivery details.';
-  window.open(`https://wa.me/+254704843554?text=${encodeURIComponent(msg)}`, '_blank');
-}
-
-// =====================
-// ZOOM LOGIC
-// =====================
-function initMainImageZoom(){
-  const img = document.getElementById('pImg');
-  if (!img) return;
-  let container = img.closest('.zoom-container');
-  let lens = container.querySelector('.zoom-lens');
-  if (!lens){
-    lens = document.createElement('span');
-    lens.className = 'zoom-lens';
-    container.appendChild(lens);
-  }
-  
-  function updateLensBg(){ lens.style.backgroundImage = `url(${img.src})`; lens.style.backgroundSize = `${img.width * 2}px ${img.height * 2}px`; }
-  
-  // Update bg size on load and resize
-  img.onload = updateLensBg;
-  // Also delay slightly to ensure layout size
-  setTimeout(updateLensBg, 500);
-
-  function move(e){
-    e.preventDefault();
-    const rect = container.getBoundingClientRect();
-    const cx = e.touches ? e.touches[0].clientX : e.clientX;
-    const cy = e.touches ? e.touches[0].clientY : e.clientY;
+    // 3. RENDER MAIN PRODUCT
+    function renderMainProduct(p) {
+    document.title = `${p.title} - Sharkim Traders`;
     
-    // Calculate position
-    let x = cx - rect.left; 
-    let y = cy - rect.top;
-
-    // Boundary check
-    if (x < 0) x = 0; if (x > rect.width) x = rect.width;
-    if (y < 0) y = 0; if (y > rect.height) y = rect.height;
-
-    // Move lens center to cursor
-    lens.style.left = (x - lens.offsetWidth/2) + 'px'; 
-    lens.style.top = (y - lens.offsetHeight/2) + 'px';
+    // Set Image and Title
+    document.getElementById('pImg').src = p.image_url;
+    document.getElementById('pImg').alt = p.title;
+    document.getElementById('pTitle').textContent = p.title;
     
-    // Move background image (opposite direction)
-    const px = (x / rect.width) * 100;
-    const py = (y / rect.height) * 100;
-    lens.style.backgroundPosition = `${px}% ${py}%`;
-  }
+    // Set Pricing
+    document.getElementById('pPrice').textContent = `Ksh ${p.price.toLocaleString()}`;
+    if (p.original_price && p.original_price > p.price) {
+        const origEl = document.getElementById('pOriginal');
+        origEl.textContent = `Ksh ${p.original_price.toLocaleString()}`;
+        
+        const discEl = document.getElementById('pDisc');
+        const pct = Math.round(((p.original_price - p.price) / p.original_price) * 100);
+        discEl.textContent = `-${pct}% OFF`;
+        discEl.classList.remove('hidden');
+    }
 
-  function enter(){ lens.style.opacity = '1'; updateLensBg(); }
-  function leave(){ lens.style.opacity = '0'; }
+    // Set Description and Features
+    document.getElementById('descText').textContent = p.description || "No description available.";
+    
+    const featuresList = document.getElementById('featuresList');
+    if (p.features && Array.isArray(p.features)) {
+        featuresList.innerHTML = p.features.map(f => `<li>${f}</li>`).join('');
+    }
 
-  container.addEventListener('mousemove', move);
-  container.addEventListener('mouseenter', enter);
-  container.addEventListener('mouseleave', leave);
-  container.addEventListener('touchmove', move);
-  container.addEventListener('touchstart', enter);
-  container.addEventListener('touchend', leave);
-}
-
-
-// =====================
-// PRODUCT DATA FETCH
-// =====================
-function qs(){ return new URLSearchParams(window.location.search); }
-const productId = qs().get('id');
-
-async function fetchProduct(id){
-  const { data, error } = await client.from('Products').select('*').eq('id', id).single();
-  if (error || !data){ document.getElementById('product-container').innerHTML = '<p class="p-10 text-center">Product not found.</p>'; return; }
-  
-  const p = { ...data, main_category: data.main_category || data.category || 'Uncategorized' };
-
-  // 1. Basic Details
-  pImg.src = p.image_url;
-  initMainImageZoom();
-  pTitle.textContent = p.title;
-  pPrice.textContent = `Ksh ${p.price}`;
-  
-  if(p.original_price && p.original_price > p.price){
-      pOriginal.textContent = `Ksh ${p.original_price}`;
-      const disc = Math.round(((p.original_price - p.price)/p.original_price)*100);
-      pDisc.textContent = `-${disc}%`;
-      pDisc.classList.remove('hidden');
-  }
-
-  // 2. Thumbnails
-  loadThumbnails(p.image_url);
-
-  // 3. Features & Desc
-  const { features, desc } = normalizeFeatures(p.features, p.description || '');
-  if(features.length > 0) {
-      featuresList.innerHTML = features.map(f => `<li>${f}</li>`).join('');
-  } else {
-      featuresList.parentNode.classList.add('hidden');
-  }
-  
-  descText.textContent = desc || 'No description available.';
-  
-  // Toggle Description Logic
-  let isExpanded = false;
-  descToggle.onclick = () => {
-      isExpanded = !isExpanded;
-      if(isExpanded){
-          descText.style.webkitLineClamp = 'unset';
-          descToggle.textContent = 'Show Less';
-      } else {
-          descText.style.webkitLineClamp = '2';
-          descToggle.textContent = 'Read More';
-      }
-  };
-
-  // 4. Variants
-  setupVariants(p);
-
-  // 5. Buttons
-  const handleAddToCart = () => {
-     const selectedRadio = variantOptions?.querySelector('input[name="variant-size"]:checked');
-     const size = selectedRadio?.value || null;
-     const price = selectedRadio ? Number(selectedRadio.getAttribute('data-price')) : p.price;
-     const title = size ? `${p.title} (${size})` : p.title;
-     // Quantity-aware add: merge with existing item if same id+variant
-     const existing = cart.find(x => x.id == p.id && (x.variant || null) === (size || null));
-     if(existing) {
-       existing.qty = (existing.qty || 1) + 1;
-     } else {
-       cart.push({ id: p.id, title, price, image_url: p.image_url, variant: size, qty: 1 });
-     }
-     saveCart(); updateCartCount(); renderCart(); openCart();
-  };
-
-    const handleBuyNow = () => {
-      handleAddToCart();
-      // Persist cart and create a temporal session then navigate to checkout with session id
-      saveCart();
-      try {
-        const sessions = JSON.parse(localStorage.getItem('checkout_sessions') || '{}');
-        const sessionId = 's_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2,9);
-        let subtotal = 0; cart.forEach(it => subtotal += (Number(it.price||0) * (it.qty||1)));
-        sessions[sessionId] = { cart: cart, subtotal: subtotal, shippingCost: 0, shippingMethod: '', createdAt: Date.now() };
-        localStorage.setItem('checkout_sessions', JSON.stringify(sessions));
-        window.location.href = 'checkout.html?cart=' + encodeURIComponent(sessionId);
-      } catch(e) {
-        window.location.href = 'checkout.html';
-      }
+    // Setup Buttons (Desktop & Mobile)
+    const handleAdd = () => {
+        let cart = JSON.parse(localStorage.getItem('cart') || '[]');
+        let exist = cart.find(x => x.id === p.id);
+        if(exist) exist.qty++; else cart.push({ id: p.id, title: p.title, price: p.price, image: p.image_url, qty: 1 });
+        localStorage.setItem('cart', JSON.stringify(cart));
+        alert('Added to cart!');
     };
 
-  btns.cartDesktop.onclick = handleAddToCart;
-  btns.cartMobile.onclick = handleAddToCart;
-  btns.buyDesktop.onclick = handleBuyNow;
-  btns.buyMobile.onclick = handleBuyNow;
-
-  // 6. JSON-LD
-  updateJSONLD(p);
-  
-  // 7. Breadcrumbs
-  const bcCat = document.getElementById('bcCatLink');
-  bcCat.textContent = p.main_category;
-  bcCat.href = `shop.html?main=${encodeURIComponent(p.main_category)}`;
-  document.getElementById('bcCatWrapper').classList.remove('hidden');
-
-  if(p.subcategory){
-      const bcSub = document.getElementById('bcSubLink');
-      bcSub.textContent = p.subcategory;
-      bcSub.href = `shop.html?main=${encodeURIComponent(p.main_category)}&sub=${encodeURIComponent(p.subcategory)}`;
-      document.getElementById('bcSubWrapper').classList.remove('hidden');
-  }
-
-  // 8. Related & Upsell
-  fetchRelated(p.main_category, p.id);
-  fetchUpsells();
+    document.getElementById('btnCartDesktop').onclick = handleAdd;
+    document.getElementById('btnCartMobile').onclick = handleAdd;
 }
 
-// Helpers
-function parseFeatures(text){
-  let features = [];
-  let desc = text || '';
-  const start = desc.indexOf('[FEATURES]');
-  const end = desc.indexOf('[/FEATURES]');
-  if (start !== -1 && end !== -1 && end > start){
-    const inner = desc.substring(start + 10, end).trim();
-    features = inner.split(/\r?\n/).map(s => s.replace(/^[\-•]\s*/, '').trim()).filter(Boolean);
-    desc = (desc.slice(0, start) + desc.slice(end + 11)).trim();
-  }
-  return { features, desc };
-}
+  // 4. LOAD RELATED PRODUCTS (VECTOR SEARCH) - UPDATED
+async function loadRelatedProducts(embedding, currentId) {
+    if (!embedding) return;
 
-function normalizeFeatures(featuresField, descriptionText){
-  if (Array.isArray(featuresField)){
-      return { features: featuresField.filter(Boolean), desc: descriptionText };
-  }
-  return parseFeatures(descriptionText);
-}
-
-// Thumbnails from storage (logic based on folder structure)
-async function loadThumbnails(imageUrl){
-  try{
-    const idx = imageUrl.indexOf('/product-images/');
-    if (idx === -1) return;
-    const path = imageUrl.substring(idx + '/product-images/'.length);
-    const parts = path.split('/');
-    if (parts.length <= 1) return;
-    parts.pop();
-    const folder = parts.join('/') + '/';
-    
-    const { data } = await client.storage.from('product-images').list(folder, { limit: 10 });
-    if (!data || data.length === 0) return;
-
-    pThumbs.innerHTML = '';
-    // Add original as first thumb
-    const mainThumb = document.createElement('img');
-    mainThumb.src = imageUrl;
-    mainThumb.className = "w-20 h-20 object-contain border hover:border-[#ea580c] cursor-pointer bg-white p-1 rounded";
-    mainThumb.onclick = () => { pImg.src = imageUrl; initMainImageZoom(); };
-    pThumbs.appendChild(mainThumb);
-
-    data.filter(f => !f.name.startsWith('.')).forEach(file => {
-      const url = `${SUPABASE_URL}/storage/v1/object/public/product-images/${folder}${file.name}`;
-      if(url === imageUrl) return; 
-      const img = document.createElement('img');
-      img.src = url;
-      img.className = "w-20 h-20 object-contain border hover:border-[#ea580c] cursor-pointer bg-white p-1 rounded";
-      img.onclick = () => { pImg.src = url; initMainImageZoom(); };
-      pThumbs.appendChild(img);
+    // Use the RPC function created in SQL for vector similarity
+    const { data: related, error } = await client.rpc('match_products', {
+        query_embedding: embedding, // Search using current product's vector data
+        match_threshold: 0.5,       // Adjusted threshold for better variety
+        match_count: 8              // Fetching 8 to fill the horizontal scroller
     });
-  } catch(e){}
-}
 
-// Variants
-function setupVariants(prod){
-    // Simple heuristic for variants if not explicitly in DB
-    let variants = [];
-    if(prod.variants && Array.isArray(prod.variants)) variants = prod.variants;
-    // Fallback logic for demo
-    if(variants.length === 0 && (prod.main_category === 'Shoes' || prod.subcategory === 'Shoes')){
-        ['38','39','40','41','42','43','44'].forEach(s => variants.push({size: s, price: prod.price}));
+    if (error) {
+        console.error("Vector search error:", error);
+        return;
     }
 
-    if(variants.length === 0) return;
+    // Target 'relGrid' to match the ID in your product.html
+    const container = document.getElementById('relGrid');
+    
+    if (container && related) {
+        container.innerHTML = '';
+        
+        // Filter out the current product to avoid showing it in recommendations
+        const filtered = related.filter(p => p.id !== currentId);
+        
+        // Map products into the horizontal scroll card format
+        container.innerHTML = filtered.map(p => `
+            <a href="product.html?id=${p.id}" class="flex-shrink-0 w-48 bg-white border rounded-xl p-3 hover:shadow-md transition">
+                <div class="h-32 w-full mb-2">
+                    <img src="${p.image_url || 'images/sharkim_gold_logo.png'}" 
+                         class="h-full w-full object-contain" 
+                         loading="lazy">
+                </div>
+                <h4 class="text-xs font-bold line-clamp-2 h-8 text-gray-800">${p.title}</h4>
+                <div class="mt-1">
+                    <span class="text-[#ea580c] font-bold text-sm">Ksh ${(p.price || 0).toLocaleString()}</span>
+                </div>
+            </a>
+        `).join('');
+    }
+}
+// =====================
+// NEW: AI Search Logic
+// =====================
 
-    variantBox.classList.remove('hidden');
-    variantOptions.innerHTML = variants.map((v, i) => `
-      <label class="cursor-pointer">
-        <input type="radio" name="variant-size" value="${v.size}" data-price="${v.price}" ${i===0?'checked':''} class="peer sr-only">
-        <div class="px-3 py-1 border rounded text-sm peer-checked:bg-[#ea580c] peer-checked:text-white peer-checked:border-[#ea580c] hover:bg-gray-100 transition">
-            ${v.size}
+// 1. Safe Helper to ensure UI exists before use
+// 1. Safe Helper - Made more aggressive
+function ensureAiUiExists() {
+    let modal = document.getElementById('ai-search-modal');
+    if (!modal) {
+        console.time("UI_Injection_Speed"); // Start timer
+        injectAiUi();
+        modal = document.getElementById('ai-search-modal');
+        console.timeEnd("UI_Injection_Speed"); // See how long injection took
+    }
+    return modal;
+}
+
+// 2. Move the call OUTSIDE of any event listeners
+
+injectAiUi(); 
+
+// Update your DOMContentLoaded to just fetch products
+document.addEventListener('DOMContentLoaded', () => {
+    console.log("LOG: DOM fully loaded and parsed");
+    fetchProducts();
+});
+
+// 2. The Trigger Function
+async function handleAiSearch(query) {
+    if (!query) return;
+
+    // Ensure UI is ready
+    const modal = ensureAiUiExists();
+    const chatContainer = document.getElementById('ai-chat-container');
+
+    // Double check container exists to prevent "appendChild of null"
+    if (!modal || !chatContainer) {
+        console.error("AI Search UI could not be initialized.");
+        return;
+    }
+
+    // Show the modal
+    modal.classList.remove('hidden');
+    
+    // Add user text
+    addChatMessage('user', query);
+    const loadingId = addLoadingIndicator();
+
+    try {
+        // Call the Edge Function
+        const { data, error } = await client.functions.invoke('ai-search', {
+            body: { 
+                query: query, 
+                history: searchHistory,
+            }
+        });
+
+        if (error) throw error;
+
+        removeLoadingIndicator(loadingId);
+
+        if (data && data.refined_products) {
+            // Show AI response + Horizontal Scroll
+            addAiResponse(data.pre_text, data.refined_products);
+            
+            // Save context for "Refine Search"
+            searchHistory.push({ role: 'user', content: query });
+            searchHistory.push({ 
+                role: 'assistant', 
+                content: data.pre_text, 
+                product_ids: data.refined_products.map(p => p.id) 
+            });
+        }
+    } catch (err) {
+        removeLoadingIndicator(loadingId);
+        // Fallback if chatContainer disappeared
+        const container = document.getElementById('ai-chat-container');
+        if (container) {
+            addChatMessage('ai', "I'm having trouble connecting to the network. Please try again.");
+        }
+        console.error("Edge Function Error:", err);
+    }
+}
+
+// 3. Updated Event Listeners
+// These match the IDs in your index.html exactly
+const searchConfig = [
+    { btn: 'searchBtnDesktop', input: 'searchInputDesktop' },
+    { btn: 'searchBtnMobile', input: 'searchInputMobile' },
+    { btn: 'aiSearchDesktop', input: 'searchInputDesktop' },
+    { btn: 'aiSearchMobile', input: 'searchInputMobile' }
+];
+
+searchConfig.forEach(({ btn, input }) => {
+    const btnEl = document.getElementById(btn);
+    const inputEl = document.getElementById(input);
+    
+    if (btnEl) {
+        // Clone to clear old keyword-search listeners
+        const newBtn = btnEl.cloneNode(true);
+        btnEl.parentNode.replaceChild(newBtn, btnEl);
+
+        newBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const val = inputEl ? inputEl.value.trim() : '';
+            
+            // Ensure UI is ready immediately on click
+            const modal = ensureAiUiExists();
+
+            if (val) {
+                handleAiSearch(val);
+                if(inputEl) inputEl.value = ''; 
+            } else if (modal) {
+                // If empty, just open the AI chat modal
+                modal.classList.remove('hidden');
+            }
+        });
+    }
+});
+// =====================
+// UI HELPER FUNCTIONS
+// =====================
+
+// Generates HTML for a Single Product Card
+function createProductCard(p, isHorizontal = false) {
+    const card = document.createElement('div');
+    
+    // Different styles for Homepage Grid vs AI Horizontal Scroll
+    const wrapperClass = isHorizontal 
+        ? "min-w-[260px] w-[260px] snap-center bg-white border rounded-lg shadow-sm flex-shrink-0 mr-4"
+        : "bg-white border rounded-lg shadow-sm hover:shadow-md transition relative";
+    
+    card.className = wrapperClass;
+    
+    // Logic for Image: specific to your new DB schema (image_url)
+    // Also handles the "In Stock" badge
+    const stockBadge = (p.stock_quantity && p.stock_quantity > 0) 
+        ? '<span class="absolute top-2 right-2 bg-green-100 text-green-800 text-xs px-2 py-1 rounded z-10">In Stock</span>' 
+        : '';
+
+    card.innerHTML = `
+      <a href="product.html?id=${p.id}" class="block h-full flex flex-col">
+        <div class="h-48 p-4 flex items-center justify-center relative">
+           ${stockBadge}
+           <img src="${p.image_url || 'placeholder.jpg'}" class="h-full object-contain mx-auto" loading="lazy" alt="${p.title}">
         </div>
-      </label>
-    `).join('');
-    
-    variantOptions.addEventListener('change', (e) => {
-        const p = e.target.getAttribute('data-price');
-        if(p) pPrice.textContent = `Ksh ${p}`;
-    });
-}
-
-// JSON-LD
-function updateJSONLD(prod) {
-  const jsonData = {
-    "@context": "https://schema.org/",
-    "@type": "Product",
-    "name": prod.title,
-    "image": [prod.image_url],
-    "description": prod.description,
-    "sku": String(prod.id),
-    "offers": {
-      "@type": "Offer",
-      "priceCurrency": "KES",
-      "price": String(prod.price),
-      "availability": "https://schema.org/InStock"
-    }
-  };
-  document.getElementById("product-jsonld").textContent = JSON.stringify(jsonData, null, 2);
-}
-
-// Related Products
-async function fetchRelated(category, currentId){
-    const { data } = await client.from('Products').select('*').eq('main_category', category).neq('id', currentId).limit(8);
-    renderGrid(data, relGrid);
-}
-
-// Upsells (Random mix for demo)
-async function fetchUpsells(){
-    const { data } = await client.from('Products').select('*').limit(8); // Just fetching random 8 for demo
-    if(data) renderGrid(data.reverse(), upsellGrid);
-}
-
-function renderGrid(products, container){
-    if(!products || products.length === 0) return;
-    container.innerHTML = '';
-    products.forEach(p => {
-    const el = document.createElement('a');
-    el.href = `product.html?id=${p.id}`;
-    el.className = 'block bg-white p-3 rounded shadow text-center min-w-[200px]';
-    el.innerHTML = `
-      <div class="h-64 w-full mb-3 flex items-center justify-center">
-        <img src="${p.image_url}" class="h-full object-contain mx-auto">
-      </div>
-      <h3 class="text-sm font-bold text-gray-800 line-clamp-2 mb-2">${p.title}</h3>
-      <p class="text-xs line-through text-gray-500">${p.original_price? 'Ksh ' + p.original_price : ''}</p>
-      <p class="text-[#ea580c] font-bold text-lg">Ksh ${p.price}</p>
+        <div class="p-4 border-t flex-1 flex flex-col justify-between">
+          <div>
+            <h3 class="text-sm font-bold text-gray-800 line-clamp-2 mb-2">${p.title}</h3>
+            <div class="text-xs text-gray-500 line-through">${p.original_price ? 'Ksh ' + p.original_price : ''}</div>
+            <div class="text-[#ea580c] font-bold text-lg">Ksh ${p.price}</div>
+          </div>
+        </div>
+      </a>
     `;
-    container.appendChild(el);
+    return card;
+}
+
+// Injects the Hidden AI Modal into HTML
+function injectAiUi() {
+    if (document.getElementById('ai-search-modal')) return; // Don't create twice
+
+    const div = document.createElement('div');
+    div.id = 'ai-search-modal';
+    div.className = 'fixed inset-0 bg-black/60 z-[9999] hidden flex flex-col justify-end sm:justify-center items-center backdrop-blur-sm transition-all';
+    div.innerHTML = `
+      <div class="bg-gray-50 w-full max-w-2xl h-[85vh] sm:h-[80vh] sm:rounded-xl shadow-2xl flex flex-col overflow-hidden animate-slide-up">
+        <div class="p-4 bg-white border-b flex justify-between items-center shadow-sm">
+            <div class="flex items-center gap-2">
+                <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <h2 class="font-bold text-gray-800">AI Assistant</h2>
+            </div>
+            <button onclick="document.getElementById('ai-search-modal').classList.add('hidden')" class="p-2 hover:bg-gray-100 rounded-full transition">
+                <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+
+        <div id="ai-chat-container" class="flex-1 overflow-y-auto p-4 space-y-6 scroll-smooth">
+            <div class="text-center text-gray-400 text-sm mt-10">
+                <p class="mb-2">Try searching for:</p>
+                <span class="inline-block bg-white px-3 py-1 rounded-full border text-xs m-1">"Cheap phones 128gb"</span>
+                <span class="inline-block bg-white px-3 py-1 rounded-full border text-xs m-1">"Laptops for gaming"</span>
+            </div>
+        </div>
+
+        <div class="p-3 bg-white border-t">
+            <div class="flex gap-2 relative">
+                <input id="ai-refine-input" type="text" placeholder="Refine results... (e.g. 'Under 40k')" 
+                    class="w-full pl-4 pr-12 py-3 border rounded-full focus:outline-none focus:ring-2 focus:ring-black text-sm shadow-sm"
+                    onkeypress="if(event.key === 'Enter') document.getElementById('ai-send-btn').click()">
+                <button id="ai-send-btn" class="absolute right-2 top-1.5 bg-black text-white p-2 rounded-full hover:bg-gray-800 transition">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M12 5l7 7-7 7"></path></svg>
+                </button>
+            </div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(div);
+
+    // Refine Button Logic
+    document.getElementById('ai-send-btn').addEventListener('click', () => {
+        const input = document.getElementById('ai-refine-input');
+        const val = input.value.trim();
+        if(val) {
+            handleAiSearch(val); // Re-runs search with history
+            input.value = '';
+        }
     });
 }
 
-// Search Logic
-function handleSearch(id) {
-    const val = document.getElementById(id).value.trim();
-    if(val) window.location.href = `shop.html?q=${encodeURIComponent(val)}`;
+// Chat UI Helpers
+function addChatMessage(role, text) {
+    const container = document.getElementById('ai-chat-container');
+    const div = document.createElement('div');
+    div.className = role === 'user' ? 'flex justify-end' : 'flex justify-start';
+    div.innerHTML = `
+        <div class="${role === 'user' ? 'bg-black text-white' : 'bg-white border text-gray-800'} px-5 py-2.5 rounded-2xl max-w-[85%] text-sm shadow-sm">
+            ${text}
+        </div>
+    `;
+    container.appendChild(div);
+    container.scrollTop = container.scrollHeight;
 }
-document.getElementById('searchBtnDesktop')?.addEventListener('click', () => handleSearch('searchInputDesktop'));
-document.getElementById('searchBtnMobile')?.addEventListener('click', () => handleSearch('searchInputMobile'));
-document.getElementById('aiSearchDesktop')?.addEventListener('click', () => {
-  const inp = document.getElementById('searchInputDesktop');
-  if (inp.value.trim()) handleSearch('searchInputDesktop'); else inp.focus();
-});
-document.getElementById('aiSearchMobile')?.addEventListener('click', () => {
-  const inp = document.getElementById('searchInputMobile');
-  if (!inp) return;
-  if (inp.value.trim()) handleSearch('searchInputMobile'); else inp.focus();
-});
 
-if (productId) fetchProduct(productId);
-else document.getElementById('product-container').innerHTML = '<p class="p-10 text-center">No product selected.</p>';
+function addAiResponse(preText, products) {
+    const container = document.getElementById('ai-chat-container');
+    
+    const msgDiv = document.createElement('div');
+    msgDiv.className = 'flex flex-col items-start gap-3 max-w-full w-full';
+    msgDiv.innerHTML = `
+        <div class="bg-white border px-5 py-3 rounded-2xl rounded-tl-none text-gray-800 text-sm shadow-sm">
+            ${preText}
+        </div>
+    `;
+    
+    if (products.length > 0) {
+        const carousel = document.createElement('div');
+        carousel.className = 'flex overflow-x-auto space-x-4 w-full py-2 pb-4 snap-x hide-scrollbar px-1';
+        products.forEach(p => {
+            carousel.appendChild(createProductCard(p, true)); // True = Horizontal Style
+        });
+        msgDiv.appendChild(carousel);
+    }
 
+    container.appendChild(msgDiv);
+    container.scrollTop = container.scrollHeight;
+}
+
+function addLoadingIndicator() {
+    const id = 'loading-' + Date.now();
+    const container = document.getElementById('ai-chat-container');
+    const div = document.createElement('div');
+    div.id = id;
+    div.className = 'flex justify-start';
+    div.innerHTML = `
+        <div class="bg-gray-100 px-4 py-2 rounded-2xl rounded-tl-none text-xs text-gray-500 flex items-center gap-2">
+            <span class="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></span>
+            <span class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.1s"></span>
+            <span class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.2s"></span>
+        </div>
+    `;
+    container.appendChild(div);
+    container.scrollTop = container.scrollHeight;
+    return id;
+}
+
+function removeLoadingIndicator(id) {
+    const el = document.getElementById(id);
+    if(el) el.remove();
+}
+function initLazyLoader() {
+    const target = document.getElementById('youMayLikeRow1');
+    if (!target) return;
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                console.log("LOG: User reached bottom section, rendering remaining products...");
+                renderBottomRows();
+                observer.unobserve(target); // Stop observing once rendered
+            }
+        });
+    }, { rootMargin: '200px' }); // Start loading 200px before the user sees it
+
+    observer.observe(target);
+}
+
+function renderBottomRows() {
+    const row1 = document.getElementById('youMayLikeRow1');
+    const row2 = document.getElementById('youMayLikeRow2');
+    if (!row1 || !row2) return;
+
+    const shuffled = [...allProducts].sort(() => 0.5 - Math.random()).slice(4, 24);
+    
+    shuffled.forEach((p, i) => {
+        const card = renderCard(p, true);
+        card.classList.add('animate-fade-in'); // Add a nice fade effect
+        if (i % 2 === 0) row1.appendChild(card);
+        else row2.appendChild(card);
+    });
+}
+    loadProduct();
 </script>
 </body>
 </html>
