@@ -17,6 +17,7 @@
   
   <script src="https://cdn.tailwindcss.com/"></script>
   <script src="https://unpkg.com/@supabase/supabase-js"></script>
+  <script src="js/cart.js"></script>
   
   <style>
     html, body { max-width: 100%; overflow-x: hidden; font-family: "Times New Roman", Times, serif, Arial, Helvetica, sans-serif; }
@@ -223,10 +224,6 @@
         </div>
 
         <div class="flex items-center gap-3">
-          <button id="cartBtn" class="relative text-gray-800 hover:text-[#ea580c] transition">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4h-2l-1 2H1v2h2l3.6 7.6-1.4 2.4c-.2.3-.2.8 0 1.2.2.4.6.6 1 .6h12v-2H7.4c-.1 0-.2 0-.2-.1l.9-1.5h7.9c.4 0 .7-.2.9-.5l3.6-6.5c.2-.4.1-.8 0-1.1-.2-.3-.5-.5-.9-.5H6.2L5.3 4H7zm0 16c-1.1 0-2 .9-2 2s.9 2 2 2c1.2 0 2-.9 2-2s-.8-2-2-2zm10 0c-1.1 0-2 .9-2 2s.9 2 2 2c1.2 0 2-.9 2-2s-.9-2-2-2z"/></svg>
-            <span id="cartCount" class="absolute -top-1 -right-2 bg-[#ea580c] text-white text-xs font-bold px-1.5 py-0.5 rounded-full">0</span>
-          </button>
         </div>
     </div>
 
@@ -269,23 +266,19 @@
       </aside>
 
       <div class="md:col-span-3">
-        <div class="carousel-container rounded-none md:rounded-xl shadow-lg bg-white">
-        <div class="carousel-slide active">
-          <img src="images/Banner.png" class="w-full h-full object-cover" alt="Banner 1" width="1200" height="600" decoding="async" fetchpriority="high">
+    <div id="heroCarousel" class="relative w-full h-[300px] md:h-[500px] overflow-hidden rounded-xl shadow-lg bg-gray-200">
+        
+        <div class="carousel-slide active absolute inset-0 transition-opacity duration-1000">
+            <img src="images/Banner.png" class="w-full h-full object-cover" alt="Loading Banner">
             <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
             <div class="absolute bottom-8 left-0 w-full flex flex-col items-center">
-                <h2 class="text-3xl md:text-5xl font-bold text-white mb-4 drop-shadow-md">Upgrade Your Home</h2>
-                <a href="shop.html" class="px-8 py-3 bg-[#ea580c] text-white font-bold rounded-full hover:bg-orange-700 transition shadow-md border-2 border-white/20">Shop Now</a>
+                <h2 class="text-3xl md:text-5xl font-bold text-white mb-4 drop-shadow-md">Welcome to Sharkim</h2>
+                <a href="shop.html" class="px-8 py-3 bg-[#ea580c] text-white font-bold rounded-full hover:bg-orange-700 transition">Shop Now</a>
             </div>
         </div>
-           <div class="carousel-slide">
-             <img src="images/Banner 2.webp" class="w-full h-full object-cover" alt="Banner 2" width="1200" height="600" loading="lazy" decoding="async">
-             <div class="absolute bottom-8 left-0 w-full flex flex-col items-center">
-                <h2 class="text-3xl md:text-5xl font-bold text-white mb-4 drop-shadow-md">Best Electronics</h2>
-                <a href="shop.html" class="px-8 py-3 bg-[#ea580c] text-white font-bold rounded-full hover:bg-orange-700 transition shadow-md">View Offers</a>
-            </div>
-        </div>
-      </div>
+
+    </div>
+</div>
     </div>
   </div>
 </section>
@@ -298,21 +291,33 @@
             </div>
     </section>
 
-    <section class="bg-white rounded-xl p-4 md:p-6 shadow-sm border border-gray-100">
-        <div class="flex flex-col md:flex-row items-center justify-between mb-6 border-b pb-4">
-            <h2 class="text-2xl md:text-3xl font-extrabold italic text-gray-800"><span class="text-[#ea580c]">⚡ FLASH</span> SALES</h2>
-            <div class="flex items-center gap-2 mt-4 md:mt-0">
-                <span class="font-bold text-gray-600 text-sm">Ends in:</span>
-                <div class="flex gap-1 text-center">
-                    <div class="bg-[#ea580c] text-white rounded px-2 py-1 font-mono font-bold">02</div>:
-                    <div class="bg-[#ea580c] text-white rounded px-2 py-1 font-mono font-bold">45</div>:
-                    <div class="bg-[#ea580c] text-white rounded px-2 py-1 font-mono font-bold">30</div>
-                </div>
+    <section id="flashSaleSection" class="hidden bg-white rounded-xl p-4 md:p-6 shadow-sm border border-gray-100 mb-8">
+    <div class="flex flex-col md:flex-row items-center justify-between mb-6 border-b pb-4">
+        <div class="flex items-center gap-2">
+            <h2 class="text-2xl md:text-3xl font-extrabold italic text-gray-800">
+                <span class="text-[#ea580c]">⚡ FLASH</span> SALES
+            </h2>
+        </div>
+        
+        <div class="flex items-center gap-2 mt-4 md:mt-0 bg-gray-50 px-3 py-2 rounded-lg border border-gray-100">
+            <span class="font-bold text-gray-500 text-xs uppercase tracking-wider">Ends in:</span>
+            <div id="flashTimerDisplay" class="flex gap-1 items-center">
+                <div id="flashH" class="bg-[#ea580c] text-white rounded px-2 py-1 font-mono font-bold min-w-[35px] text-center">00</div>
+                <span class="text-[#ea580c] font-bold">:</span>
+                <div id="flashM" class="bg-[#ea580c] text-white rounded px-2 py-1 font-mono font-bold min-w-[35px] text-center">00</div>
+                <span class="text-[#ea580c] font-bold">:</span>
+                <div id="flashS" class="bg-[#ea580c] text-white rounded px-2 py-1 font-mono font-bold min-w-[35px] text-center">00</div>
             </div>
         </div>
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4" id="flashSalesContainer">
-             </div>
-    </section>
+    </div>
+
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4" id="flashItemsContainer">
+        <div class="animate-pulse bg-gray-100 h-48 rounded-lg"></div>
+        <div class="animate-pulse bg-gray-100 h-48 rounded-lg"></div>
+        <div class="animate-pulse bg-gray-100 h-48 rounded-lg hidden md:block"></div>
+        <div class="animate-pulse bg-gray-100 h-48 rounded-lg hidden md:block"></div>
+    </div>
+</section>
 
     <section>
       <h2 class="text-2xl font-bold text-center mb-8 text-gray-800"><span class="title-underline">Browse by Category</span></h2>
@@ -415,13 +420,17 @@
     <div class="order-2 flex justify-center md:justify-center">
       <div class="w-full md:w-64">
         <h3 class="text-lg font-semibold mb-3 text-white text-left md:text-left">Quick Links</h3>
-        <ul class="space-y-2 text-sm mb-6 text-left">
-          <li><a href="index.html" class="hover:text-[#ac8334]">Home</a></li>
-          <li><a href="shop.html" class="hover:text-[#ac8334]">Shop</a></li>
-          <li><a href="about.html" class="hover:text-[#ac8334]">About Us</a></li>
-          <li><a href="faq.html" class="hover:text-[#ac8334]">FAQ</a></li>
-          <li><a href="contact.html" class="hover:text-[#ac8334]">Contact</a></li>
-        </ul>
+        <ul class="space-y-2 text-gray-400 text-sm">
+  <li>
+      <a href="policies.html?id=shipping" class="hover:text-[#ac8334] transition-colors">Shipping Policy</a>
+  </li>
+  <li>
+      <a href="policies.html?id=return" class="hover:text-[#ac8334] transition-colors">Return Policy</a>
+  </li>
+  <li>
+      <a href="policies.html?id=terms" class="hover:text-[#ac8334] transition-colors">Terms & Conditions</a>
+  </li>
+</ul>
       </div>
     </div>
 

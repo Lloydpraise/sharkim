@@ -1,0 +1,6 @@
+- [x] Modify renderMainGrid in shop.html to implement lazy loading: top picks show first 10 products, main grid excludes them; if category selected, show all remaining; if no category, show 50 initially with "Show More" button that loads 50 more each time.
+- [x] Add "Show More" button styling (orange, bottom center).
+- [x] Updated count to include top picks (e.g., "Showing 60 of 150 products").
+- [x] Change renderMainGrid to limit initial load to 50 even for category selected, with show more button.
+- [x] Optimize rendering by batching DOM insertions to prevent UI freeze.
+- [x] Update count display to reflect loaded vs total.

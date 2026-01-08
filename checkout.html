@@ -15,6 +15,7 @@
   <title>Checkout - Sharkim Traders</title>
   
   <script src="https://cdn.tailwindcss.com/"></script>
+  <script src="https://unpkg.com/@supabase/supabase-js"></script>
   
   <style>
     /* Global Font & Body */
@@ -152,7 +153,7 @@
                 </h2>
                 <div class="grid grid-cols-2 gap-3">
                     
-                    <button onclick="selectDelivery(Free, 'Pickup Point', this)" class="delivery-option p-3 border-2 border-gray-100 rounded-xl text-left hover:border-gray-300 transition group flex flex-col justify-between h-full">
+                    <button onclick="selectDelivery(0, 'Pickup Point', this)" class="delivery-option p-3 border-2 border-gray-100 rounded-xl text-left hover:border-gray-300 transition group flex flex-col justify-between h-full">
                         <div>
                             <div class="font-bold text-sm text-gray-800">PickUp from Shop</div>
                             <div class="text-xs text-gray-500 mt-1">Nairobi CBD</div>
@@ -285,6 +286,69 @@
     </div>
 </div>
 
+<div id="paymentModal" class="fixed inset-0 z-50 hidden flex items-center justify-center animate-fade-in">
+    <div class="absolute inset-0 bg-black bg-opacity-70 backdrop-blur-sm"></div>
+    <div class="bg-white w-11/12 max-w-md p-6 rounded-2xl shadow-2xl relative z-10">
+        
+        <div class="text-center mb-4">
+            <h2 class="text-xl font-bold text-gray-800">Select Payment Method</h2>
+            <p class="text-xs text-gray-500">Your order has been recorded. Please pay to complete.</p>
+        </div>
+
+        <div class="bg-orange-50 border border-orange-100 rounded-xl p-3 text-center mb-4">
+            <p class="text-[10px] uppercase font-bold text-gray-400">Total Payable</p>
+            <p class="text-2xl font-black text-[#ea580c]">Ksh <span id="modalTotalAmount">0</span></p>
+        </div>
+
+        <div class="grid grid-cols-3 gap-2 mb-6">
+            <button onclick="switchMethod('mpesa')" id="tab-mpesa" class="payment-tab p-2 border-2 rounded-xl flex flex-col items-center gap-1 border-[#ea580c] bg-orange-50">
+                <img src="images/mpesa1.png" class="h-5 object-contain" alt="Mpesa">
+                <span class="text-[10px] font-bold">M-Pesa</span>
+            </button>
+            <button onclick="switchMethod('equity')" id="tab-equity" class="payment-tab p-2 border-2 border-gray-100 rounded-xl flex flex-col items-center gap-1">
+                <img src="images/equity.png" class="h-5 object-contain" alt="Equity">
+                <span class="text-[10px] font-bold text-gray-600">Equity</span>
+            </button>
+            <button onclick="switchMethod('im')" id="tab-im" class="payment-tab p-2 border-2 border-gray-100 rounded-xl flex flex-col items-center gap-1">
+                <div class="h-5 flex items-center font-black text-blue-900 text-xs italic">I&M Bank</div>
+                <span class="text-[10px] font-bold text-gray-600">I&M</span>
+            </button>
+        </div>
+
+        <div id="method-details" class="bg-gray-50 p-4 rounded-xl border border-gray-200 mb-6 min-h-[120px]">
+            <div id="detail-mpesa" class="method-detail space-y-1">
+                <p class="text-xs font-bold text-gray-800 underline mb-2">Lipa Na M-Pesa Instructions:</p>
+                <p class="text-xs text-gray-600">1. Go to M-Pesa > Lipa na M-Pesa</p>
+                <p class="text-xs text-gray-600">2. Select **Paybill**</p>
+                <p class="text-xs text-gray-800 font-medium">3. Business No: <span class="bg-yellow-100 px-1">[Add Paybill Here]</span></p>
+                <p class="text-xs text-gray-800 font-medium">4. Account No: <span class="bg-yellow-100 px-1">[Add Account Number Here]</span></p>
+            </div>
+            <div id="detail-equity" class="method-detail hidden space-y-1">
+                <p class="text-xs font-bold text-gray-800 underline mb-2">Equity Bank Instructions:</p>
+                <p class="text-xs text-gray-600">1. Send money to Equity Account</p>
+                <p class="text-xs text-gray-800 font-medium">2. Account: <span class="bg-yellow-100 px-1">[Add Equity Account Here]</span></p>
+                <p class="text-xs text-gray-800 font-medium">3. Name: <span class="bg-yellow-100 px-1">Sharkim Traders</span></p>
+            </div>
+            <div id="detail-im" class="method-detail hidden space-y-1">
+                <p class="text-xs font-bold text-gray-800 underline mb-2">I&M Bank Instructions:</p>
+                <p class="text-xs text-gray-600">1. Transfer to I&M Bank</p>
+                <p class="text-xs text-gray-800 font-medium">2. Account: <span class="bg-yellow-100 px-1">[Add I&M Account Here]</span></p>
+                <p class="text-xs text-gray-800 font-medium">3. Name: <span class="bg-yellow-100 px-1">Sharkim Traders</span></p>
+            </div>
+        </div>
+
+        <div class="space-y-3">
+            <button onclick="handlePaid()" class="w-full py-4 bg-[#ea580c] hover:bg-orange-700 text-white font-bold rounded-xl shadow-md transition flex items-center justify-center gap-2">
+                <span>I Have Paid</span>
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+            </button>
+            <button onclick="document.getElementById('paymentModal').classList.add('hidden')" class="w-full py-2 text-gray-400 text-[10px] uppercase font-bold tracking-widest hover:text-gray-600 transition">
+                Close
+            </button>
+        </div>
+    </div>
+</div>
+
 <footer class="bg-black text-[#ac8334] text-center py-6 mt-12 border-t border-gray-800">
     <p class="text-sm">&copy; 2025 Sharkim Traders. All rights reserved.</p>
 </footer>
@@ -316,6 +380,10 @@ if(!cart || cart.length === 0) {
     alert("Your cart is empty. Redirecting to shop.");
     window.location.href = 'shop.html';
 }
+
+window.addEventListener('load', () => {
+    logCheckoutEvent('checkout_start');
+});
 
 // ==========================
 // 2. AUTH MODAL LOGIC
@@ -470,9 +538,13 @@ function validateForm() {
     return { name, phone, loc };
 }
 
-function processWhatsAppCheckout() {
+async function processWhatsAppCheckout() {
+    logCheckoutEvent('whatsapp_click');
     const data = validateForm();
     if (!data) return;
+
+    // 1. Generate a short unique Order Number (e.g., SHA-1234)
+    const orderRef = "SHA-" + Math.floor(1000 + Math.random() * 9000);
 
     try {
         if (checkoutSessionId) {
@@ -487,24 +559,15 @@ function processWhatsAppCheckout() {
         }
     } catch(e) {}
 
-    let msg = `*🛒 New Order Request*\n`;
-    msg += `---------------------------\n`;
-    msg += `👤 *Customer:* ${data.name}\n`;
-    msg += `📞 *Phone:* ${data.phone}\n`;
-    msg += `📍 *Location:* ${data.loc}\n`;
-    msg += `🚚 *Delivery:* ${shippingMethod} (Ksh ${shippingCost})\n`;
-    msg += `---------------------------\n*Items:*\n`;
+    // 2. Save Order to DB - Passing orderRef as the 3rd argument
+    try {
+        await saveOrderToDb(data, 'WhatsApp', orderRef);
+    } catch(e) {
+        console.error('Failed to save order to DB:', e);
+    }
 
-    let subtotal = 0;
-    cart.forEach(item => {
-        const qty = item.qty || 1;
-        const totalItem = item.price * qty;
-        subtotal += totalItem;
-        msg += `• ${item.title} (x${qty}) - Ksh ${totalItem}\n`;
-    });
-
-    const grandTotal = subtotal + shippingCost;
-    msg += `\n💰 *TOTAL PAYABLE: Ksh ${grandTotal.toLocaleString()}*`;
+    // 3. Simplified Professional WhatsApp Message
+    const msg = `Hello Sharkim Traders, I want to proceed with my order. \n\n*Order Number: ${orderRef}*`;
     
     const encodedMsg = encodeURIComponent(msg);
     const phoneNumber = "254704843554"; 
@@ -512,6 +575,9 @@ function processWhatsAppCheckout() {
     const appLink = `whatsapp://send?phone=${phoneNumber}&text=${encodedMsg}`;
     const webLink = `https://wa.me/${phoneNumber}?text=${encodedMsg}`;
     
+    // Clear cart locally as the order is now successfully logged
+    localStorage.removeItem('cart');
+
     if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
          window.location.href = appLink;
          setTimeout(() => { window.location.href = webLink; }, 2000);
@@ -519,25 +585,132 @@ function processWhatsAppCheckout() {
          window.open(webLink, '_blank');
     }
 }
+// ================= ORDER SAVING LOGIC =================
 
-function processPayment() {
+// 1. Initialize Supabase (Ensure this matches your index.html config)
+const sbUrl = 'https://ljxvxbjhkgoeygpyejkc.supabase.co'; 
+const sbKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxqeHZ4Ympoa2dvZXlncHllamtjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc1ODE3MzMsImV4cCI6MjA4MzE1NzczM30.fBrwtnv89UHgjs523rKCODE5W4nfBmDsP0AUQ8NgBlU';
+const client = window.supabase.createClient(sbUrl, sbKey);
+
+// Analytics Wrapper for Checkout
+const sessionId = localStorage.getItem('site_session_id');
+
+async function logCheckoutEvent(type) {
+    if(!sessionId) return;
+    await client.from('analytics').insert([{
+        session_id: sessionId,
+        event_type: type
+    }]);
+}
+
+
+async function saveOrderToDb(data, method, orderRef) {
+    // 1. Prepare Data
+    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+    const totalStr = document.getElementById('summaryTotal').innerText;
+    const grandTotal = parseFloat(totalStr.replace(/[^\d.]/g, ''));
+    const cleanPhone = String(data.phone).replace(/\s+/g, '');
+
+    // 2. UPSERT CUSTOMER FIRST
+    // This creates the customer or updates them if the phone exists
+    const { data: customerData, error: custError } = await client
+        .from('customers')
+        .upsert({
+            phone: cleanPhone,
+            name: data.name,
+            location: data.loc,
+            last_order_at: new Date().toISOString()
+        }, { onConflict: 'phone' })
+        .select()
+        .single();
+
+    if (custError) {
+        console.error("Customer Sync Error:", custError.message);
+    }
+
+    // 3. PREPARE ORDER PAYLOAD
+    const orderPayload = {
+        order_number: orderRef,
+        customer_id: customerData ? customerData.id : null, // Links to customer table ID
+        customer_name: data.name,
+        customer_phone: cleanPhone,
+        customer_location: data.loc, // Column from your schema
+        delivery_location: data.loc, // Column from your schema
+        items: cart,
+        shipping_cost: shippingCost,
+        shipping_method: shippingMethod, // Uses variable from your checkout logic
+        total_amount: grandTotal,
+        payment_method: method,
+        status: 'pending'
+    };
+
+    // 4. SAVE TO ORDERS TABLE
+    const { error: orderError } = await client.from('orders').insert([orderPayload]);
+    
+    if (orderError) {
+        console.error("Order Save Failed:", orderError.message);
+        throw orderError; // Stops the WhatsApp redirect if DB save fails
+    }
+}
+
+// 1. REPLACING PROCESS PAYMENT
+async function processPayment() {
+    logCheckoutEvent('payment_click');
     const data = validateForm();
     if (!data) return;
+
+    // Generate Order Reference
+    const orderRef = "SHA-" + Math.floor(1000 + Math.random() * 9000);
+
+    // Save to Database FIRST
     try {
-        if (checkoutSessionId) {
-            const sessions = JSON.parse(localStorage.getItem('checkout_sessions') || '{}');
-            sessions[checkoutSessionId] = sessions[checkoutSessionId] || {};
-            sessions[checkoutSessionId].user = { name: data.name, phone: data.phone };
-            sessions[checkoutSessionId].location = data.loc;
-            sessions[checkoutSessionId].shippingCost = shippingCost;
-            sessions[checkoutSessionId].shippingMethod = shippingMethod;
-            sessions[checkoutSessionId].updatedAt = Date.now();
-            localStorage.setItem('checkout_sessions', JSON.stringify(sessions));
-        }
-    } catch(e) {}
+        // Change 'Payment Gateway' to 'Bank/Paybill' for internal tracking
+        await saveOrderToDb(data, 'Bank/Paybill', orderRef);
+    } catch(e) {
+        console.error('Failed to save order to DB:', e);
+        alert("Error saving order. Check connection.");
+        return;
+    }
+
+    // Display total and show modal
+    const totalPayable = document.getElementById('summaryTotal').innerText;
+    document.getElementById('modalTotalAmount').innerText = totalPayable;
+    document.getElementById('paymentModal').classList.remove('hidden');
+}
+
+// 2. HELPER TO SWITCH BANK DETAILS
+function switchMethod(method) {
+    // Reset all tabs and details
+    document.querySelectorAll('.payment-tab').forEach(btn => {
+        btn.classList.remove('border-[#ea580c]', 'bg-orange-50');
+        btn.classList.add('border-gray-100');
+    });
+    document.querySelectorAll('.method-detail').forEach(div => div.classList.add('hidden'));
+
+    // Highlight selected tab
+    const activeTab = document.getElementById('tab-' + method);
+    activeTab.classList.remove('border-gray-100');
+    activeTab.classList.add('border-[#ea580c]', 'bg-orange-50');
+
+    // Show selected details
+    document.getElementById('detail-' + method).classList.remove('hidden');
+}
+
+// 3. HANDLE FINAL CLICK
+function handlePaid() {
+
+    const total = document.getElementById('modalTotalAmount').innerText;
     
-    const grandTotal = document.getElementById('summaryTotal').innerText;
-    alert(`Initiating Payment for Ksh ${grandTotal}...\n\n(This would trigger the Payment Gateway integration).`);
+    const businessPhone = "254704843554"; 
+    
+    const message = `Hello Sharkim Traders, I have just made a payment of Ksh ${total} for my order. Please verify and process it.`;
+    
+    localStorage.removeItem('cart');
+    
+    const whatsappUrl = `https://wa.me/${businessPhone}?text=${encodeURIComponent(message)}`;
+    alert("Opening WhatsApp to send your payment confirmation...");
+    
+    window.location.href = whatsappUrl;
 }
 
 </script>

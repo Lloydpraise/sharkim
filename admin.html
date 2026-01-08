@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sharkim Admin Pro</title>
+  <link rel="icon" type="image/png" href="images/icon%20logo.png" />
+  
+  <script src="https://cdn.tailwindcss.com/"></script>
+  <script src="https://unpkg.com/@supabase/supabase-js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+  
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              orange: '#ea580c', // Your brand orange
+              gold: '#ac8334',   // Your brand gold
+              dark: '#111827',
+              bg: '#f3f4f6'
+            }
+          },
+          fontFamily: {
+            serif: ['"Times New Roman"', 'Times', 'serif'],
+            sans: ['ui-sans-serif', 'system-ui', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #1f2937; }
+    ::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #ea580c; }
+    
+    .glass-panel {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+    }
+    
+    /* Toggle Switch */
+    .toggle-checkbox:checked { right: 0; border-color: #ea580c; }
+    .toggle-checkbox:checked + .toggle-label { background-color: #ea580c; }
+    
+    /* Animations */
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .animate-enter { animation: fadeIn 0.4s ease-out forwards; }
+  </style>
+</head>
+<body class="bg-brand-bg h-screen flex overflow-hidden font-sans text-gray-800">
+
+  <div id="loginOverlay" class="fixed inset-0 z-[100] bg-gray-900 flex flex-col items-center justify-center text-white transition-opacity duration-500">
+    <div class="w-full max-w-sm p-8 bg-gray-800 rounded-2xl shadow-2xl border border-gray-700 text-center animate-enter">
+      <img src="images/sharkim_gold_logo.png" class="h-20 mx-auto mb-6 object-contain" alt="Sharkim">
+      <h2 class="text-2xl font-serif text-brand-gold mb-2">Admin Access</h2>
+      
+      <div class="space-y-4 mb-6 text-left">
+        <div>
+            <label class="text-xs text-gray-400 uppercase tracking-wider">Phone Number</label>
+            <input type="tel" id="phoneInput" placeholder="07..." class="w-full bg-gray-900 border border-gray-700 rounded p-3 text-white focus:border-brand-orange outline-none font-mono">
+        </div>
+        <div>
+            <label class="text-xs text-gray-400 uppercase tracking-wider">Password</label>
+            <input type="password" id="passwordInput" class="w-full bg-gray-900 border border-gray-700 rounded p-3 text-white focus:border-brand-orange outline-none">
+        </div>
+      </div>
+      
+      <button id="loginBtn" class="w-full py-3 bg-brand-orange hover:bg-orange-600 text-white font-bold rounded-lg transition shadow-lg shadow-orange-900/50">
+        Secure Login
+      </button>
+      <p id="loginError" class="text-red-500 text-sm mt-4 hidden"></p>
+    </div>
+</div>
+
+  <aside class="w-20 md:w-64 bg-[#0B0F19] flex flex-col border-r border-gray-800 shadow-xl z-20 transition-all duration-300">
+    <div class="h-20 flex items-center justify-center border-b border-gray-800/50">
+      <span class="text-2xl md:hidden">🦈</span>
+      <div class="hidden md:flex flex-col items-center">
+        <span class="font-serif text-2xl text-white tracking-wide">SHARKIM</span>
+        <span class="text-[10px] text-brand-gold uppercase tracking-[0.2em]">Traders Admin</span>
+      </div>
+    </div>
+
+    <nav class="flex-1 py-6 space-y-2 px-2">
+      <button onclick="switchView('analytics')" id="nav-analytics" class="w-full flex items-center gap-4 px-4 py-3 text-gray-400 hover:text-white hover:bg-gray-800 rounded-xl transition-all group active-nav">
+        <svg class="w-6 h-6 group-hover:text-brand-orange transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+        <span class="hidden md:block font-medium">Overview</span>
+      </button>
+      <button onclick="switchView('products')" id="nav-products" class="w-full flex items-center gap-4 px-4 py-3 text-gray-400 hover:text-white hover:bg-gray-800 rounded-xl transition-all group">
+    <svg class="w-6 h-6 group-hover:text-brand-orange transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+    </svg>
+    <span class="font-medium">Products</span>
+</button>
+
+<button onclick="switchView('orders')" id="nav-orders" class="w-full flex items-center gap-4 px-4 py-3 text-gray-400 hover:text-white hover:bg-gray-800 rounded-xl transition-all group">
+    <svg class="w-6 h-6 group-hover:text-brand-orange transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+    </svg>
+    <span class="font-medium">Orders</span>
+</button>
+
+      <button onclick="switchView('inventory')" id="nav-inventory" class="w-full flex items-center gap-4 px-4 py-3 text-gray-400 hover:text-white hover:bg-gray-800 rounded-xl transition-all group">
+        <svg class="w-6 h-6 group-hover:text-brand-orange transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+        <span class="hidden md:block font-medium">Inventory</span>
+      </button>
+
+      <button onclick="switchView('settings')" id="nav-settings" class="w-full flex items-center gap-4 px-4 py-3 text-gray-400 hover:text-white hover:bg-gray-800 rounded-xl transition-all group">
+        <svg class="w-6 h-6 group-hover:text-brand-orange transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+        <span class="hidden md:block font-medium">Site Settings</span>
+      </button>
+    </nav>
+
+    <div class="p-4 border-t border-gray-800">
+      <button onclick="logout()" class="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gray-800 hover:bg-red-900/30 text-gray-400 hover:text-red-400 rounded-lg transition-all text-sm font-medium">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+        <span class="hidden md:block">Logout</span>
+      </button>
+    </div>
+  </aside>
+
+  <main class="flex-1 overflow-y-auto bg-[#f3f4f6] relative">
+    <header class="bg-white/80 backdrop-blur sticky top-0 z-30 px-8 py-4 flex justify-between items-center shadow-sm border-b border-gray-100">
+        <h1 class="text-2xl font-serif font-bold text-gray-800" id="pageTitle">Dashboard</h1>
+        <div class="flex items-center gap-3">
+            <div class="h-2 w-2 rounded-full bg-green-500 animate-pulse"></div>
+            <span class="text-sm font-medium text-gray-500">Live System</span>
+        </div>
+    </header>
+
+    <div class="p-6 md:p-8 max-w-7xl mx-auto space-y-8 pb-20">
+
+        <div id="analyticsSection" class="view-section animate-enter">
+    <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-serif text-gray-800">Business Intelligence</h2>
+        <div class="text-sm text-gray-500 bg-white px-3 py-1 rounded border">
+            Data Source: Live
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+            <p class="text-gray-500 text-xs font-bold uppercase tracking-wider">Total Orders</p>
+            <h3 class="text-3xl font-bold text-gray-800 mt-2" id="ana-orders">0</h3>
+            <div class="mt-2 text-xs text-green-600 font-bold">Successfully placed</div>
+        </div>
+        
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+            <p class="text-gray-500 text-xs font-bold uppercase tracking-wider">Total Customers</p>
+            <h3 class="text-3xl font-bold text-gray-800 mt-2" id="ana-customers">0</h3>
+            <div class="mt-2 text-xs text-blue-600">Unique Profiles</div>
+        </div>
+
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+            <p class="text-gray-500 text-xs font-bold uppercase tracking-wider">Total Products</p>
+            <h3 class="text-3xl font-bold text-gray-800 mt-2" id="ana-products">0</h3>
+            <div class="mt-2 text-xs text-gray-400">In Inventory</div>
+        </div>
+
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+            <p class="text-gray-500 text-xs font-bold uppercase tracking-wider">Avg Session Time</p>
+            <h3 class="text-3xl font-bold text-gray-800 mt-2" id="ana-session">0m</h3>
+            <div class="mt-2 text-xs text-purple-600">Time on Site</div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 lg:col-span-2">
+            <h3 class="font-bold text-gray-800 font-serif mb-6">Shopping Funnel</h3>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                <div class="p-4 bg-gray-50 rounded-xl">
+                    <div class="text-2xl font-bold text-gray-700" id="ana-cart-adds">0</div>
+                    <div class="text-xs text-gray-500 mt-1">Added to Cart</div>
+                </div>
+                <div class="p-4 bg-orange-50 rounded-xl border border-orange-100">
+                    <div class="text-2xl font-bold text-red-500" id="ana-abandoned">0</div>
+                    <div class="text-xs text-gray-600 mt-1">Abandoned Carts</div>
+                    <div class="text-[10px] text-gray-400 mt-1">(Items in cart, no checkout)</div>
+                </div>
+                <div class="p-4 bg-green-50 rounded-xl border border-green-100">
+                    <div class="text-2xl font-bold text-green-600" id="ana-wa-clicks">0</div>
+                    <div class="text-xs text-green-700 mt-1">WhatsApp Checkout</div>
+                </div>
+                <div class="p-4 bg-blue-50 rounded-xl border border-blue-100">
+                    <div class="text-2xl font-bold text-blue-600" id="ana-pay-clicks">0</div>
+                    <div class="text-xs text-blue-700 mt-1">Direct Payment</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+            <h3 class="font-bold text-gray-800 font-serif mb-4">Most Browsed Categories</h3>
+            <div class="space-y-4" id="ana-categories-list">
+                <div class="text-sm text-gray-400 text-center py-4">Loading data...</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+        <div id="inventorySection" class="view-section hidden">
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col md:flex-row gap-4 justify-between items-center mb-6">
+                <div class="flex gap-2 w-full md:w-auto">
+                    <div class="relative flex-1 md:w-80">
+                        <input type="text" id="searchInput" placeholder="Search products..." class="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:border-brand-orange focus:ring-1 focus:ring-brand-orange transition">
+                        <svg class="w-5 h-5 text-gray-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    </div>
+                    <select id="filterCategory" class="bg-gray-50 border border-gray-200 rounded-lg px-4 py-2 text-sm focus:outline-none">
+                        <option value="">All Categories</option>
+                    </select>
+                </div>
+
+                <button onclick="openProductModal()" class="w-full md:w-auto bg-brand-orange hover:bg-orange-600 text-white px-6 py-2 rounded-lg font-bold shadow-lg shadow-orange-500/30 transition transform hover:-translate-y-0.5 flex items-center justify-center gap-2">
+                    <span>+</span> Add Product
+                </button>
+            </div>
+
+            <div id="productsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 pr-20 lg:pr-24"></div>
+
+            <div id="alphaSlider" class="hidden lg:flex fixed right-6 top-8 z-40 flex-col gap-1 bg-white/70 backdrop-blur-sm rounded-lg p-2 shadow-lg">
+                </div>
+        </div>
+
+        <div id="inventoryTableSection" class="view-section hidden">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-serif text-brand-dark">Inventory Management</h2>
+                <button onclick="fetchAllProducts()" class="text-sm bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-lg text-gray-600 font-bold transition">
+                    ↻ Refresh
+                </button>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider border-b border-gray-100">
+                                <th class="p-4 font-semibold">Product</th>
+                                <th class="p-4 font-semibold">Status</th>
+                                <th class="p-4 font-semibold">Stock Qty</th>
+                                <th class="p-4 font-semibold">Auto-Off</th>
+                                <th class="p-4 font-semibold">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inventoryTableBody" class="text-sm text-gray-700 divide-y divide-gray-100">
+                            <tr><td colspan="5" class="p-8 text-center text-gray-400">Loading inventory...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="ordersSection" class="view-section hidden space-y-6">
+            <div class="flex justify-between items-center">
+                <h2 class="text-2xl font-serif text-brand-dark">Order Management</h2>
+                <button onclick="fetchAllOrders()" class="text-sm bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-lg text-gray-600 font-bold transition">
+                    ↻ Refresh
+                </button>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider border-b border-gray-100">
+                                <th class="p-4 font-semibold">Order ID</th>
+                                <th class="p-4 font-semibold">Customer</th>
+                                <th class="p-4 font-semibold">Total</th>
+                                <th class="p-4 font-semibold">Method</th>
+                                <th class="p-4 font-semibold">Date</th>
+                                <th class="p-4 font-semibold">Status</th>
+                                <th class="p-4 font-semibold">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ordersTableBody" class="text-sm text-gray-700 divide-y divide-gray-100">
+                            <tr><td colspan="7" class="p-8 text-center text-gray-400">Loading orders...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="settingsSection" class="view-section hidden space-y-8">
+            <div class="flex justify-between items-center">
+                <h1 class="text-3xl font-serif text-brand-dark">Site Configuration</h1>
+            </div>
+
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                <h2 class="text-xl font-bold mb-4 text-brand-dark flex items-center gap-2">
+                    <span>🖼️</span> Homepage Banners (Top 4)
+                </h2>
+                <div class="p-3 mb-4 bg-blue-50 text-blue-700 text-sm rounded border border-blue-100">
+                    <strong>Guidelines:</strong> 1920x600px (Desktop) or 800x800px (Square).
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="bannersContainer"></div>
+            </div>
+
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                <h2 class="text-xl font-bold mb-4 text-brand-dark flex items-center gap-2">
+                    <span>📜</span> Store Policies
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="space-y-2">
+                        <label class="font-bold text-gray-600">Return Policy</label>
+                        <textarea id="policyReturn" rows="6" class="w-full p-3 border rounded-lg bg-gray-50 focus:ring-2 focus:ring-brand-orange outline-none" placeholder="Enter plain text..."></textarea>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="font-bold text-gray-600">Shipping Policy</label>
+                        <textarea id="policyShipping" rows="6" class="w-full p-3 border rounded-lg bg-gray-50 focus:ring-2 focus:ring-brand-orange outline-none" placeholder="Enter plain text..."></textarea>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="font-bold text-gray-600">Terms & Conditions</label>
+                        <textarea id="policyTerms" rows="6" class="w-full p-3 border rounded-lg bg-gray-50 focus:ring-2 focus:ring-brand-orange outline-none" placeholder="Enter plain text..."></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                <h2 class="text-xl font-bold mb-4 text-brand-dark flex items-center gap-2">
+                    <span>⚡</span> Flash Sale Manager
+                </h2>
+                <div class="flex gap-6 mb-6 border-b pb-6">
+                    <div class="w-1/3">
+                        <label class="block text-sm font-bold text-gray-500 mb-1">Sale End Date & Time</label>
+                        <input type="datetime-local" id="flashEndTime" class="w-full p-2 border rounded font-mono">
+                    </div>
+                    <div class="flex items-center gap-3 pt-6">
+                        <input type="checkbox" id="flashActive" class="w-5 h-5 text-brand-orange rounded focus:ring-0">
+                        <label for="flashActive" class="font-bold text-gray-700">Enable Flash Sale Section</label>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-gray-500 mb-2">Select Sale Items</label>
+                    <input type="text" id="flashSearch" placeholder="Search products..." class="w-full p-2 border rounded mb-2" onkeyup="filterFlashProducts()">
+                    <div class="flex gap-4 h-64">
+                        <div class="flex-1 border rounded overflow-y-auto p-2 bg-gray-50" id="flashSourceList"></div>
+                        <div class="flex-1 border rounded overflow-y-auto p-2 bg-orange-50 border-orange-200" id="flashSelectedList">
+                            <h4 class="text-xs font-bold text-brand-orange uppercase mb-2">Selected Items</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-center mt-8">
+                <button onclick="saveSiteSettings()" class="bg-brand-orange text-white px-8 py-3 rounded-lg font-bold shadow-lg hover:bg-orange-700 transition">
+                    Save Settings
+                </button>
+            </div>
+        </div></div>
+  </main>
+
+  <div id="productModal" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity" onclick="closeProductModal()"></div>
+    
+    <div class="absolute right-0 top-0 h-full w-full md:w-[600px] lg:w-[800px] bg-white shadow-2xl flex flex-col transform transition-transform duration-150 translate-x-full" id="productModalPanel" style="will-change: transform;">
+      
+      <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+        <h3 class="text-xl font-serif font-bold text-gray-800" id="modalTitle">New Product</h3>
+        <button onclick="closeProductModal()" class="text-gray-400 hover:text-red-500 transition">
+          <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+      </div>
+
+      <div class="flex-1 overflow-y-auto p-6 md:p-8">
+        <form id="productForm" class="space-y-8">
+          <input type="hidden" id="editProductId">
+          <input type="hidden" id="editProductSource">
+
+           <!-- Reordered: Product Name, Category, Images, Key Features, Description, Variations, Pricing, Inventory -->
+           <div class="space-y-4">
+             <label class="block text-sm font-bold text-gray-700 uppercase tracking-wide">Product Name</label>
+             <input type="text" id="inpTitle" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:border-brand-orange focus:ring-0 transition text-lg font-medium" placeholder="Product Name (e.g. Sony 55 Inch TV)" required>
+           </div>
+
+           <div class="space-y-4">
+             <label class="block text-sm font-bold text-gray-700 uppercase tracking-wide">Category</label>
+             <select id="inpCategory" class="w-full px-3 py-2 border rounded-lg mb-2 focus:border-brand-orange focus:outline-none bg-white text-sm">
+              <option value="">Select Category</option>
+             </select>
+             <div class="flex gap-2">
+               <select id="inpSubcategory" class="w-full px-3 py-2 border rounded-lg focus:border-brand-orange focus:outline-none text-sm bg-white">
+                <option value="">Select Subcategory</option>
+               </select>
+               <input type="text" id="inpBrand" class="w-full px-3 py-2 border rounded-lg focus:border-brand-orange focus:outline-none text-sm" placeholder="Brand">
+             </div>
+           </div>
+
+           <div class="space-y-4">
+            <label class="block text-sm font-bold text-gray-700 uppercase tracking-wide">Gallery</label>
+            <div class="border-2 border-dashed border-gray-300 rounded-xl p-6 bg-gray-50/50 hover:bg-white transition flex flex-col items-center justify-center text-center cursor-pointer" onclick="document.getElementById('inpImages').click()">
+              <input type="file" id="inpImages" multiple accept="image/*" class="hidden">
+              <svg class="w-10 h-10 text-brand-gold mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+              <span class="text-sm font-medium text-gray-600">Click to upload images</span>
+              <span class="text-xs text-gray-400 mt-1">Drag thumbnails below to reorder. First is primary.</span>
+            </div>
+            
+            <div id="imageSortList" class="grid grid-cols-4 gap-3 mt-4"></div>
+
+            <!-- Pricing moved here: Selling price + Original (strikethrough example) -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+              <div>
+                <label class="text-xs text-gray-500 mb-1 block">Selling Price</label>
+                <input type="number" id="inpPrice" class="w-full px-3 py-2 border rounded-lg focus:border-brand-orange focus:outline-none font-bold text-gray-800" placeholder="0.00" required>
+              </div>
+              <div>
+                <label class="text-xs text-gray-500 mb-1 block">Original (Strikethrough) <span class="text-xs text-gray-400 ml-2"><s>Ksh 1,000</s></span></label>
+                <input type="number" id="inpOriginalPrice" class="w-full px-3 py-2 border rounded-lg focus:border-brand-orange focus:outline-none text-gray-500" placeholder="0.00">
+              </div>
+            </div>
+           </div>
+
+           <div>
+            <label class="block text-sm font-bold text-gray-700 uppercase tracking-wide mb-2">Key Features</label>
+            <div id="featuresList" class="space-y-2 mb-2"></div>
+            <button type="button" onclick="addFeatureInput()" class="text-sm text-brand-orange font-bold hover:underline">+ Add Feature</button>
+           </div>
+
+           <div class="space-y-4">
+             <label class="block text-sm font-bold text-gray-700 uppercase tracking-wide">Description</label>
+             <textarea id="inpDesc" rows="4" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:border-brand-orange focus:ring-0 transition" placeholder="Description..."></textarea>
+           </div>
+
+           <div class="bg-gray-50 p-4 rounded-xl border border-gray-200">
+            <div class="flex justify-between items-center mb-4">
+              <h4 class="font-bold text-gray-700">Variations (Sizes/Colors)</h4>
+              <button type="button" onclick="document.getElementById('variationsPanel').classList.toggle('hidden')" class="text-xs bg-gray-200 px-2 py-1 rounded hover:bg-gray-300">Add</button>
+            </div>
+            <div id="variationsPanel" class="hidden space-y-3">
+              <div class="flex gap-2">
+                <select id="varType" class="border rounded p-2 text-sm"><option>Size</option><option>Color</option><option>Type</option></select>
+                <input id="varValue" type="text" placeholder="Value (e.g. XL)" class="border rounded p-2 flex-1 text-sm">
+                <input id="varPrice" type="number" placeholder="Diff Price" class="border rounded p-2 w-24 text-sm">
+                <button type="button" onclick="addVariation()" class="bg-gray-800 text-white px-3 rounded text-sm">Add</button>
+              </div>
+              <div id="variationsList" class="flex flex-wrap gap-2"></div>
+            </div>
+           </div>
+
+           <div class="space-y-4">
+             <div class="flex items-center justify-between bg-gray-50 p-4 rounded-xl border border-gray-200">
+               <div>
+                 <h4 class="font-bold text-gray-700">Track Inventory</h4>
+                 <p class="text-xs text-gray-500">Enable stock counting for this item</p>
+               </div>
+               <div class="relative inline-block w-12 align-middle select-none">
+                 <input type="checkbox" id="inpTrackInventory" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer transition-all duration-300"/>
+                 <label for="inpTrackInventory" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer transition-all duration-300"></label>
+               </div>
+             </div>
+           </div>
+
+           <div id="inventoryDetails" class="hidden grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-xl border border-gray-200 mt-[-20px]">
+             <div>
+               <label class="text-xs font-bold text-gray-500">Quantity in Stock</label>
+               <input type="number" id="inpStockQty" value="0" class="w-full border rounded p-2">
+             </div>
+             <div class="flex items-center gap-2 pt-4">
+               <input type="checkbox" id="inpAutoOff" checked class="w-4 h-4 text-brand-orange rounded focus:ring-0">
+               <span class="text-sm text-gray-600">Auto-hide when 0</span>
+             </div>
+           </div>
+
+        </form>
+      </div>
+
+      <div class="p-6 border-t border-gray-100 bg-gray-50 flex justify-between items-center">
+         <span id="saveStatus" class="text-sm font-medium animate-pulse"></span>
+         <div class="flex gap-3">
+            <button onclick="closeProductModal()" class="px-5 py-2.5 rounded-lg text-gray-500 font-bold hover:bg-gray-200 transition">Cancel</button>
+            <button onclick="handleSaveProduct()" id="btnSave" class="px-6 py-2.5 rounded-lg bg-brand-orange text-white font-bold hover:bg-orange-700 shadow-lg shadow-orange-500/30 transition transform active:scale-95">Save Changes</button>
+         </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="js/categories.js"></script>
+  <script src="admin.js"></script>
+  <div id="customerModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl">
+        <div class="flex justify-between items-center mb-4 border-b pb-2">
+            <h3 class="text-xl font-bold text-gray-800">Customer Info</h3>
+            <button onclick="closeOrderModals()" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+        </div>
+        <div id="customerModalContent" class="space-y-3 text-gray-700">
+            </div>
+    </div>
+</div>
+
+<div id="itemsModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl">
+        <div class="flex justify-between items-center mb-4 border-b pb-2">
+            <h3 class="text-xl font-bold text-gray-800">Order Items</h3>
+            <button onclick="closeOrderModals()" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+        </div>
+        <div id="itemsModalContent" class="space-y-4 max-h-[60vh] overflow-y-auto">
+            </div>
+    </div>
+</div>
+</body>
+</html>
