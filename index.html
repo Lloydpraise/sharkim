@@ -390,7 +390,7 @@
              <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-gray-500 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
           </summary>
           <div class="px-4 pb-4 text-gray-600 text-sm">
-            We accept returns for items with manufacturing defects within a specific period from delivery. Please contact our support immediately if you encounter an issue. Ensure the item is in original packaging.
+            We accept returns for items with manufacturing defects within 48hrs from delivery. Please contact our support immediately if you encounter an issue. Ensure the item is in original packaging.
           </div>
         </details>
         <details class="bg-white rounded-lg shadow-sm group">
@@ -454,5 +454,45 @@
 <script src="js/categories.js"></script>
 <script src="index.js"></script>
 <script src="js/lazyload.js"></script>
+
+<!-- Exit Intent Modal -->
+<div id="exitIntentModal" class="fixed inset-0 z-50 hidden flex items-center justify-center animate-fade-in">
+    <div class="absolute inset-0 bg-black bg-opacity-70 backdrop-blur-sm"></div>
+    <div class="bg-white w-11/12 max-w-md p-8 rounded-2xl shadow-2xl relative z-10 text-center">
+
+        <h2 class="text-2xl font-bold text-gray-800 mb-2">Don't Miss Out</h2>
+        <p class="text-gray-500 mb-6 text-sm">Get up to <span class="text-[#ea580c] font-bold">30%</span> Exclusive Discounts on Selected Products if you join Our WhatsApp Community! Fill below and we will contact you soon on how to join!.</p>
+
+        <div class="space-y-4 text-left">
+            <div>
+                <label class="block text-sm font-bold text-gray-700 ml-1 mb-1">First Name</label>
+                <input type="text" id="exitFirstName" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:border-[#ea580c] focus:outline-none transition" placeholder="Your First Name">
+            </div>
+            <div>
+                <label class="block text-sm font-bold text-gray-700 ml-1 mb-1">Phone Number</label>
+                <input type="tel" id="exitPhone" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:border-[#ea580c] focus:outline-none transition" placeholder="07...">
+            </div>
+        </div>
+
+        <div class="flex items-center justify-between mt-8">
+            <button onclick="skipExitModal()" class="text-gray-400 text-sm hover:text-gray-600 transition font-medium px-2">
+                Skip
+            </button>
+            <button onclick="submitExitModal()" class="px-8 py-3 bg-[#ea580c] hover:bg-orange-700 text-white font-bold rounded-lg shadow-md transition transform active:scale-95">
+                Get Discounts!
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Sticky Exit Intent Button -->
+<div id="exitIntentButton" class="fixed bottom-4 left-4 z-40">
+    <div onclick="showExitModal()" class="bg-[#ea580c] text-white rounded-full shadow-lg flex items-center px-4 py-2 hover:bg-orange-700 transition cursor-pointer">
+        <button onclick="closeExitIntentButton(); event.stopPropagation();" class="text-white hover:text-gray-200 mr-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+        </button>
+        <span class="text-sm font-bold">Don't Miss Out</span>
+    </div>
+</div>
 </body>
 </html>

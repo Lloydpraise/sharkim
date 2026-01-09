@@ -13,6 +13,41 @@ let currentUploadFiles = [];
 let currentVariations = [];
 const PIN_CODE = "1234"; // Default PIN
 
+// ================= PRODUCT CACHE LOGIC =================
+function showGlobalLoading() {
+    document.getElementById('loadingOverlay').classList.remove('hidden');
+}
+
+function hideGlobalLoading() {
+    document.getElementById('loadingOverlay').classList.add('hidden');
+}
+
+async function loadProductsFromCache() {
+    const cached = localStorage.getItem('productCache');
+    if (cached) {
+        const cachedProducts = JSON.parse(cached);
+        // Reconstruct allProducts with image_url for lazy loading
+        allProducts = cachedProducts.map(p => ({
+            ...p,
+            displayImage: p.image_url || 'images/sharkim_gold_logo.png',
+            images: [],
+            image_url: p.image_url
+        }));
+        // Ensure sorted by id
+        allProducts = allProducts.sort((a, b) => a.id - b.id);
+        renderProducts(allProducts);
+        renderInventory(allProducts);
+        updateStats(allProducts);
+        populateCategories(allProducts);
+        // Refresh lazy loader for new images
+        if (window.lazyLoader && window.lazyLoader.refresh) window.lazyLoader.refresh();
+    } else {
+        showGlobalLoading();
+        await fetchAllProducts();
+        hideGlobalLoading();
+    }
+}
+
 // ======= PERFORMANCE HELPERS =======
 function debounce(fn, wait = 250) {
     let t;
@@ -107,7 +142,7 @@ window.logout = async function() {
 // ================= DASHBOARD INIT =================
 async function initDashboard() {
     try {
-        await fetchAllProducts();
+        await loadProductsFromCache();
         await fetchAnalytics(); // Integrated from adminnew.js
     } finally {
     }
@@ -135,6 +170,28 @@ async function fetchAllProducts() {
         // Helper property for consistent rendering
         displayImage: (p.images && p.images.length > 0) ? p.images[0] : (p.image_url || 'images/sharkim_gold_logo.png')
     }));
+
+    // Sort by id and cache metadata (include image_url for lazy loading)
+    allProducts = allProducts.sort((a, b) => a.id - b.id);
+    const cacheProducts = allProducts.map(p => ({
+      id: p.id,
+      title: p.title,
+      price: p.price,
+      image_url: p.image_url,
+      main_category: p.main_category,
+      original_price: p.original_price,
+      stock_quantity: p.stock_quantity,
+      track_inventory: p.track_inventory,
+      auto_off: p.auto_off,
+      brand: p.brand,
+      subcategory: p.subcategory,
+      description: p.description,
+      features: p.features,
+      variants: p.variants,
+      created_at: p.created_at,
+      updated_at: p.updated_at
+    }));
+    localStorage.setItem('productCache', JSON.stringify(cacheProducts));
 
     renderProducts(allProducts);
     renderInventory(allProducts);
@@ -203,7 +260,7 @@ function renderProducts(products) {
                 card.className = "bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg transition group relative flex flex-col";
                 card.innerHTML = `
                     <div class="h-48 overflow-hidden bg-gray-50 relative">
-                        <img loading="lazy" src="${p.displayImage}" class="w-full h-full object-contain p-4 group-hover:scale-105 transition duration-500">
+                        <img src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" data-src="${p.displayImage}" class="w-full h-full object-contain p-4 group-hover:scale-105 transition duration-500">
                     </div>
                     <div class="p-4 flex-1 flex flex-col">
                         <h3 class="font-bold text-gray-800 line-clamp-1 mb-1" title="${(p.title||'').replace(/"/g,'&quot;')}">${p.title || ''}</h3>
@@ -454,7 +511,11 @@ window.closeProductModal = function() {
     }, 300);
 }
 
-window.editProduct = function(id) {
+window.editProduct = async function(id) {
+    // Ensure products are loaded from local first
+    if (!allProducts || allProducts.length === 0) {
+        await loadProductsFromCache();
+    }
     openProductModal();
     const p = allProducts.find(x => String(x.id) === String(id));
     if(!p) return;
@@ -630,14 +691,54 @@ window.handleSaveProduct = async function() {
 
         if(result.error) throw result.error;
 
+        // Update local allProducts and cache
+        if(id) {
+            // Update existing
+            const index = allProducts.findIndex(p => String(p.id) === String(id));
+            if(index !== -1) {
+                allProducts[index] = { ...allProducts[index], ...payload, updated_at: new Date().toISOString() };
+            }
+        } else {
+            // Add new
+            const newProduct = { ...payload, id: result.data[0].id, created_at: new Date().toISOString(), updated_at: new Date().toISOString() };
+            allProducts.push(newProduct);
+            allProducts.sort((a, b) => a.id - b.id);
+        }
+
+        // Update cache
+        const cacheProducts = allProducts.map(p => ({
+            id: p.id,
+            title: p.title,
+            price: p.price,
+            image_url: p.image_url,
+            main_category: p.main_category,
+            original_price: p.original_price,
+            stock_quantity: p.stock_quantity,
+            track_inventory: p.track_inventory,
+            auto_off: p.auto_off,
+            brand: p.brand,
+            subcategory: p.subcategory,
+            description: p.description,
+            features: p.features,
+            variants: p.variants,
+            created_at: p.created_at,
+            updated_at: p.updated_at
+        }));
+        localStorage.setItem('productCache', JSON.stringify(cacheProducts));
+
+        // Re-render
+        renderProducts(allProducts);
+        renderInventory(allProducts);
+        updateStats(allProducts);
+        populateCategories(allProducts);
+
         if(status) {
             status.innerText = 'Saved!';
             status.className = 'text-green-600 font-bold';
         }
-        
+
         setTimeout(() => {
             closeProductModal();
-            fetchAllProducts();
             btn.disabled = false;
             btn.innerText = 'Save Product';
             if(status) status.innerText = '';

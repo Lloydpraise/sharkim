@@ -220,8 +220,8 @@ window.updateQty = (idx, change) => {
     }
 };
 
-// Add to Cart
-window.addToCart = async (id) => {
+// Silent Add to Cart (without visual feedback)
+async function silentAddToCart(id) {
     let p = window.allProducts ? window.allProducts.find(x => x.id == id) : null;
     if (!p) {
         // Fetch from DB if not in allProducts
@@ -242,24 +242,35 @@ window.addToCart = async (id) => {
         saveCart();
         updateCartCount();
         renderCart();
+    }
+}
 
-        // Visual Feedback
-        const btn = document.querySelector(`button[onclick*="addToCart('${id}')"]`) || document.activeElement;
-        if (btn && (btn.innerText.includes('CART') || btn.innerText.includes('Add') || btn.innerText.includes('ADD'))) {
-            const old = btn.innerHTML || btn.innerText;
-            btn.innerHTML = '✔ Added';
-            btn.classList.add('bg-green-100');
-            setTimeout(() => {
-                if (old) btn.innerHTML = old;
-                btn.classList.remove('bg-green-100');
-            }, 1000);
-        }
+// Add to Cart
+window.addToCart = async (id) => {
+    await silentAddToCart(id);
+
+    // Visual Feedback
+    const btn = document.querySelector(`button[onclick*="addToCart('${id}')"]`) || document.activeElement;
+    if (btn && (btn.innerText.includes('CART') || btn.innerText.includes('Add') || btn.innerText.includes('ADD'))) {
+        const old = btn.innerHTML || btn.innerText;
+        btn.innerHTML = '✔ Added';
+        btn.classList.add('bg-green-100');
+        setTimeout(() => {
+            if (old) btn.innerHTML = old;
+            btn.classList.remove('bg-green-100');
+        }, 1000);
     }
 };
 
 // Buy Now
 window.buyNow = async (id) => {
     await window.addToCart(id);
+    window.location.href = 'checkout.html';
+};
+
+// Buy Now Silent
+window.buyNowSilent = async (id) => {
+    await silentAddToCart(id);
     window.location.href = 'checkout.html';
 };
 

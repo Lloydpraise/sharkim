@@ -1,9 +1,9 @@
 /*
   Global categories map for Sharkim Traders
-  - MAIN categories match the Word document provided
   - Each main category contains an array of subcategories
   - Exposed on window as CATEGORIES and MAIN_CATEGORIES
 */
+
 (function(){
   const CATEGORIES = {
     "Trending": [],
@@ -32,18 +32,6 @@
       "Tablets"
     ],
 
-    "Vehicles": [
-      "Cars",
-      "Buses & microbuses",
-      "Motorcycles & Scooters",
-      "Construction & Heavy Machinery",
-      "Bicycles",
-      "Vehicle Parts & Accessories",
-      "Trucks & Trailers",
-      "Boats & Watercraft",
-      "Automotive services"
-    ],
-
     "Home, Furniture & Appliances": [
       "Furniture",
       "Kitchenware & Cookware",
@@ -62,17 +50,42 @@
       "Kids & Baby Fashion"
     ],
 
-    "Beauty & Personal Care": [
-      "Massager",
-      "Oral Care",
-      "Body Care",
-      "Fragrances",
-      "Hair Beauty",
-      "Make-up",
-      "Sexual Wellness",
-      "Face Care",
-      "Tools & Accessories",
-      "Vitamins & Supplements"
+    "Babies & Kids": [
+      "Babies and Kids Accessories",
+      "Playground Equipment",
+      "Care & Feeding",
+      "Children’s Clothing",
+      "Children’s Furniture",
+      "Children’s Shoes",
+      "Maternity & Pregnancy",
+      "Transport & Safety",
+      "Toys, Games, & Bikes",
+      "Baby Gear & Equipment"
+    ],
+
+    "Vehicles": [
+      "Cars",
+      "Buses & microbuses",
+      "Motorcycles & Scooters",
+      "Construction & Heavy Machinery",
+      "Bicycles",
+      "Vehicle Parts & Accessories",
+      "Trucks & Trailers",
+      "Boats & Watercraft",
+      "Automotive services"
+    ],
+
+    "Commercial Equipment & Tools": [
+      "Safety Equipment & Protective Gear",
+      "Medical Equipment & Supplies",
+      "Manufacturing Equipment",
+      "Manufacturing Material & Supplies",
+      "Printing & Graphics Equipment",
+      "Restaurant & Catering Equipment",
+      "Salon & Beauty Equipment",
+      "Stage & Event Equipment",
+      "Stationery & Office Equipment",
+      "Retail & Store Equipment"
     ],
 
     "Leisure & Activities": [
@@ -92,19 +105,7 @@
       "Camping & Outdoor Gear"
     ],
 
-    "Babies & Kids": [
-      "Babies and Kids Accessories",
-      "Playground Equipment",
-      "Care & Feeding",
-      "Children’s Clothing",
-      "Children’s Furniture",
-      "Children’s Shoes",
-      "Maternity & Pregnancy",
-      "Transport & Safety",
-      "Toys, Games, & Bikes",
-      "Baby Gear & Equipment"
-    ],
-
+    
     "Food, Agriculture, & Farming": [
       "Farm Machinery & Equipment",
       "Feeds, Supplements, & Seeds",
@@ -112,19 +113,20 @@
       "Animal Feeds & Supplements",
       "Food & Beverages"
     ],
-
-    "Commercial Equipment & Tools": [
-      "Safety Equipment & Protective Gear",
-      "Medical Equipment & Supplies",
-      "Manufacturing Equipment",
-      "Manufacturing Material & Supplies",
-      "Printing & Graphics Equipment",
-      "Restaurant & Catering Equipment",
-      "Salon & Beauty Equipment",
-      "Stage & Event Equipment",
-      "Stationery & Office Equipment",
-      "Retail & Store Equipment"
+    
+     "Beauty & Personal Care": [
+      "Massager",
+      "Oral Care",
+      "Body Care",
+      "Fragrances",
+      "Hair Beauty",
+      "Make-up",
+      "Sexual Wellness",
+      "Face Care",
+      "Tools & Accessories",
+      "Vitamins & Supplements"
     ],
+
 
     "Repair & Construction": [
       "Electrical Hand Tools",

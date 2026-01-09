@@ -111,9 +111,20 @@ async function fetchProducts() {
 
         allProducts = fullData.map(p => ({
             ...p,
-            category: p.main_category || 'Uncategorized', 
+            category: p.main_category || 'Uncategorized',
             image_url: p.image_url || 'images/sharkim_gold_logo.png'
         }));
+
+        // Cache metadata for faster shop loading
+        const metadata = allProducts.map(p => ({
+            id: p.id,
+            title: p.title,
+            price: p.price,
+            image_url: p.image_url,
+            main_category: p.main_category,
+            original_price: p.original_price
+        })).sort((a, b) => a.id - b.id);
+        localStorage.setItem('productMetadata', JSON.stringify(metadata));
 
         console.log(`LOG: Full load complete (${allProducts.length} items).`);
         initBottomLazyLoader();
@@ -230,16 +241,16 @@ function appendRemainingProducts() {
 function renderCard(product, isPopOut){
   const disc = (product.original_price && product.original_price > product.price)
     ? Math.round(((product.original_price - product.price)/product.original_price)*100) : 0;
-  
+
   const el = document.createElement('div');
   // If in horizontal scroll, set fixed width, else auto
   // Narrower width for cards so they are closer to square when height increased
-  const widthClass = isPopOut ? '' : 'w-36 md:w-auto flex-shrink-0'; 
-  
-  el.className = `bg-white p-4 rounded-xl shadow-sm border border-gray-100 relative flex flex-col ${isPopOut ? 'pop-out-card' : ''} ${widthClass}`;
+  const widthClass = isPopOut ? '' : 'w-36 md:w-auto flex-shrink-0';
+
+  el.className = `bg-white p-4 rounded-xl shadow-sm border border-gray-100 relative flex flex-col md:h-96 ${isPopOut ? 'pop-out-card' : ''} ${widthClass}`;
 
       el.innerHTML = `
-    <a href="product.html?id=${encodeURIComponent(product.id)}" class="block mb-3 relative h-48 md:h-64 overflow-hidden rounded-lg flex items-center justify-center p-2 bg-white">
+    <a href="product.html?id=${encodeURIComponent(product.id)}" class="block mb-3 relative h-48 md:h-64 w-48 md:w-64 overflow-hidden rounded-lg flex items-center justify-center p-2 bg-white">
       <img src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" data-src="${product.image_url}" class="w-full h-full object-contain hover:scale-105 transition duration-300" decoding="async" alt="${product.title}" width="600" height="400"
         srcset="${product.image_url} 600w, ${product.image_url.replace(/\.(jpg|jpeg|png)$/i, '-small.$1')} 300w"
         sizes="(max-width:640px) 90vw, 25vw"
@@ -259,9 +270,9 @@ function renderCard(product, isPopOut){
                 ADD TO CART
             </button>
             
-            <a href="checkout.html?id=${encodeURIComponent(product.id)}" class="w-full py-1.5 bg-[#ea580c] text-white text-xs font-bold rounded text-center hover:bg-orange-700 transition">
+            <button onclick="buyNowSilent('${product.id}')" class="w-full py-1.5 bg-[#ea580c] text-white text-xs font-bold rounded text-center hover:bg-orange-700 transition">
               BUY NOW
-            </a>
+            </button>
         </div>
     </div>
   `;
@@ -743,3 +754,131 @@ async function logEvent(type, metadata = {}, productId = null) {
         metadata: metadata
     }]);
 }
+
+// ================= EXIT INTENT MODAL LOGIC =================
+
+// State for exit intent
+let exitModalShown = localStorage.getItem('exitModalShown') === 'true';
+let exitIntentButtonClosed = localStorage.getItem('exitIntentButtonClosed') === 'true';
+let scrollTimer = null;
+let aiModalOpened = false;
+let productClickedInAi = false;
+
+// Function to show modal
+function showExitModal() {
+    document.getElementById('exitIntentModal').classList.remove('hidden');
+}
+
+// Function to show modal from triggers (only once)
+function showExitModalFromTrigger() {
+    if (exitModalShown) return;
+    exitModalShown = true;
+    localStorage.setItem('exitModalShown', 'true');
+    showExitModal();
+}
+
+// Skip modal
+function skipExitModal() {
+    document.getElementById('exitIntentModal').classList.add('hidden');
+    showExitIntentButton();
+}
+
+// Submit modal
+async function submitExitModal() {
+    const name = document.getElementById('exitFirstName').value.trim();
+    const phone = document.getElementById('exitPhone').value.trim();
+
+    if (!name || !phone) {
+        alert("Please enter both First Name and Phone Number.");
+        return;
+    }
+
+    try {
+        await client.from('community').insert([{ name, phone }]);
+        document.getElementById('exitIntentModal').classList.add('hidden');
+        alert("Thank you! We'll contact you soon on WhatsApp.");
+        // Reset modal shown flag so button shows again
+        exitModalShown = false;
+        localStorage.removeItem('exitModalShown');
+        showExitIntentButton();
+    } catch (err) {
+        console.error("Error saving to community:", err);
+        alert("Error saving. Please try again.");
+    }
+}
+
+// Show exit intent button
+function showExitIntentButton() {
+    if (!exitIntentButtonClosed) {
+        document.getElementById('exitIntentButton').classList.remove('hidden');
+    }
+}
+
+// Close exit intent button
+function closeExitIntentButton() {
+    document.getElementById('exitIntentButton').classList.add('hidden');
+    exitIntentButtonClosed = true;
+    localStorage.setItem('exitIntentButtonClosed', 'true');
+}
+
+// On load, hide button if closed
+if (exitIntentButtonClosed) {
+    document.getElementById('exitIntentButton').classList.add('hidden');
+}
+
+// Scroll trigger: if scroll for 6 seconds
+window.addEventListener('scroll', () => {
+    clearTimeout(scrollTimer);
+    scrollTimer = setTimeout(() => {
+        showExitModalFromTrigger();
+    }, 6000);
+});
+
+// Exit intent: mouse leave near top
+document.addEventListener('mouseleave', (e) => {
+    if (e.clientY < 50) {
+        showExitModalFromTrigger();
+    }
+});
+
+// AI search trigger: if open AI, get results, close without clicking product
+// Modify injectAiUi to track
+const originalInjectAiUi = injectAiUi;
+injectAiUi = function() {
+    originalInjectAiUi();
+    // After inject, modify close button
+    setTimeout(() => {
+        const closeBtn = document.querySelector('#ai-search-modal button[onclick*="classList.add(\'hidden\')"]');
+        if (closeBtn) {
+            closeBtn.onclick = () => {
+                document.getElementById('ai-search-modal').classList.add('hidden');
+                if (aiModalOpened && !productClickedInAi) {
+                    showExitModalFromTrigger();
+                }
+                aiModalOpened = false;
+                productClickedInAi = false;
+            };
+        }
+    }, 100);
+};
+
+// Track AI modal open
+const originalHandleAiSearch = handleAiSearch;
+handleAiSearch = async function(query) {
+    aiModalOpened = true;
+    productClickedInAi = false;
+    await originalHandleAiSearch(query);
+};
+
+// Track product clicks in AI results
+const originalCreateProductCard = createProductCard;
+createProductCard = function(p, isHorizontal = false) {
+    const card = originalCreateProductCard(p, isHorizontal);
+    const link = card.querySelector('a');
+    if (link) {
+        link.addEventListener('click', () => {
+            productClickedInAi = true;
+        });
+    }
+    return card;
+};

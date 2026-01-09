@@ -78,6 +78,10 @@
     </div>
 </div>
 
+  <div id="loadingOverlay" class="fixed inset-0 bg-gray-900/50 flex items-center justify-center z-40 hidden">
+    <div class="animate-spin rounded-full h-32 w-32 border-b-2 border-brand-orange"></div>
+  </div>
+
   <aside class="w-20 md:w-64 bg-[#0B0F19] flex flex-col border-r border-gray-800 shadow-xl z-20 transition-all duration-300">
     <div class="h-20 flex items-center justify-center border-b border-gray-800/50">
       <span class="text-2xl md:hidden">🦈</span>
@@ -480,6 +484,7 @@
   </div>
 
   <script src="js/categories.js"></script>
+  <script src="js/lazyload.js"></script>
   <script src="admin.js"></script>
   <div id="customerModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl">

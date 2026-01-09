@@ -95,37 +95,38 @@
       gap: 0.75rem; /* Reduced gap slightly for mobile compactness */
       padding-bottom: 1rem;
     }
-    /* Default scroll item width (overridden by specific classes below) */
-    .horizontal-scroll > * {
-      scroll-snap-align: start;
-      flex-shrink: 0;
+    /* --- Row Styles: Mobile First --- */
+    .independent-row { 
+        display: flex !important; 
+        overflow-x: auto !important; 
+        gap: 0.75rem !important; 
+        scroll-snap-type: x mandatory !important; 
+        padding-bottom: 1rem !important; 
     }
 
-    /* 2 Items per screen on Mobile for Top Picks */
-    .mobile-two-items > * {
-        flex: 0 0 45%; /* Fits 2 items with gap */
-        width: 45%;
-    }
-    
-    /* Small tiles for Subcats on Mobile */
-    .mobile-small-tiles > * {
-        flex: 0 0 30%; /* Fits ~3 small tiles */
-        width: 30%;
+    /* Mobile: Exactly 2 cards */
+    .independent-row > * { 
+        scroll-snap-align: start !important; 
+        flex: 0 0 calc(50% - 0.5rem) !important; 
+        min-width: calc(50% - 0.5rem) !important;
     }
 
+    /* --- Desktop: Exactly 4 cards --- */
     @media (min-width: 768px) {
-      .horizontal-scroll {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        overflow-x: visible;
-        gap: 1rem;
+      .independent-row { 
+          display: grid !important; 
+          grid-template-columns: repeat(4, 1fr) !important; 
+          overflow-x: visible !important; 
+          gap: 1.5rem !important;
       }
-      .horizontal-scroll > * { flex: auto; width: auto; }
-
-      /* Reset override classes on desktop */
-      .mobile-two-items > *, .mobile-small-tiles > * { flex: auto; width: auto; }
+      
+      .independent-row > * { 
+          flex: 0 0 auto !important; 
+          width: 100% !important; 
+          min-width: 0 !important;
+      }
+    
     }
-
     /* Custom Price Range Slider */
     .range-slider { position: relative; height: 5px; background: #ddd; border-radius: 5px; margin-top: 10px; margin-bottom: 20px; }
     .range-selected { height: 100%; left: 0%; right: 0%; position: absolute; border-radius: 5px; background: #ea580c; }
@@ -243,8 +244,8 @@
     <section id="topPicksSection">
         <h2 class="text-2xl font-bold text-left mb-4 text-[#ea580c]">Top Picks</h2>
         <div class="space-y-4">
-             <div class="horizontal-scroll mobile-two-items" id="topPicksRow1"></div>
-             <div class="horizontal-scroll mobile-two-items md:hidden" id="topPicksRow2"></div>
+             <div class="independent-row" id="topPicksRow1"></div>
+             <div class="independent-row" id="topPicksRow2"></div>
         </div>
     </section>
 
@@ -418,16 +419,62 @@ async function logEvent(type, metadata = {}, productId = null) {
 // GLOBAL VARIABLES
 
 let allProducts = [];
-let categoryProducts = []; 
+let categoryProducts = [];
 let currentMainCategory = '';
 let currentSubCategory = '';
 let minPriceLimit = 0;
 let maxPriceLimit = 100000;
 
 // NEW: Loading State Variables
-let currentLoadedCount = 0; 
-let loadLimit = 50; 
+let currentLoadedCount = 0;
+let loadLimit = 50;
 let scrollObserver = null;
+
+// TRENDING PRODUCTS FUNCTION
+async function fetchTrendingProducts() {
+    // Fetch all view events
+    const { data: views, error } = await client.from('analytics').select('product_id').eq('event_type', 'view_product');
+
+    if (error) {
+        console.error("Error fetching views:", error);
+        // Fallback to random products
+        return getRandomProducts(7);
+    }
+
+    // Count views per product
+    const viewCount = {};
+    views.forEach(v => {
+        const pid = v.product_id;
+        viewCount[pid] = (viewCount[pid] || 0) + 1;
+    });
+
+    // Sort product ids by view count descending
+    const sortedIds = Object.keys(viewCount).sort((a, b) => viewCount[b] - viewCount[a]);
+
+    // Take top 7
+    const topIds = sortedIds.slice(0, 7);
+
+    // Fetch product details
+    const { data: products } = await client.from('products').select('*').in('id', topIds);
+
+    // Sort by view count
+    const trending = (products || []).sort((a, b) => viewCount[b.id] - viewCount[a.id]);
+
+    // If less than 7, fill with random products
+    if (trending.length < 7) {
+        const remaining = 7 - trending.length;
+        const randoms = getRandomProducts(remaining, trending.map(p => p.id));
+        trending.push(...randoms);
+    }
+
+    return trending;
+}
+
+function getRandomProducts(count, excludeIds = []) {
+    const available = allProducts.filter(p => !excludeIds.includes(p.id));
+    const shuffled = available.sort(() => 0.5 - Math.random());
+    return shuffled.slice(0, count);
+}
 
 // INITIALIZATION
 // =====================
@@ -436,23 +483,47 @@ async function init() {
     currentMainCategory = urlParams.get('main') || '';
     const searchQ = urlParams.get('q');
 
-    const { data, error } = await client.from('products').select('*');
-    if (error) { console.error("Error fetching:", error); return; }
-    
-    allProducts = (data || []).map(p => ({
-        ...p,
-        main_category: p.main_category || p.category || 'Uncategorized',
-        subcategory: p.sub_category || p.subcategory || ''
-    }));
+    // Check for cached metadata first
+    const cached = localStorage.getItem('productMetadata');
+    if (cached) {
+        allProducts = JSON.parse(cached);
+    } else {
+        // Fallback to fetch all
+        const { data, error } = await client.from('products').select('*');
+        if (error) { console.error("Error fetching:", error); return; }
+        
+        allProducts = (data || []).map(p => ({
+            ...p,
+            main_category: p.main_category || p.category || 'Uncategorized',
+            subcategory: p.sub_category || p.subcategory || ''
+        }));
 
-    if(searchQ) {
+        // Cache metadata for future use
+        const metadata = allProducts.map(p => ({
+            id: p.id,
+            title: p.title,
+            price: p.price,
+            image_url: p.image_url,
+            main_category: p.main_category,
+            original_price: p.original_price
+        })).sort((a, b) => a.id - b.id);
+        localStorage.setItem('productMetadata', JSON.stringify(metadata));
+    }
+
+    if (currentMainCategory === 'Trending') {
+        categoryProducts = await fetchTrendingProducts();
+        document.getElementById('pageTitle').innerText = 'Trending Products';
+        document.getElementById('pageSubtitle').innerText = 'Most viewed and popular items';
+        document.getElementById('subCatsSection').style.display = 'none';
+        document.getElementById('filterTitle').innerText = 'Trending';
+    } else if(searchQ) {
         document.getElementById('pageTitle').innerText = `Search: "${searchQ}"`;
         document.getElementById('pageSubtitle').innerText = "Results matching your search";
         categoryProducts = allProducts.filter(p => p.title.toLowerCase().includes(searchQ.toLowerCase()));
         document.getElementById('subCatsSection').style.display = 'none';
         document.getElementById('topPicksSection').style.display = 'none';
         document.getElementById('filterTitle').innerText = "Refine Search";
-    } 
+    }
     else if (currentMainCategory) {
         document.getElementById('pageTitle').innerText = currentMainCategory;
         document.getElementById('filterTitle').innerText = currentMainCategory;
@@ -461,12 +532,12 @@ async function init() {
         document.getElementById('pageTitle').innerText = "All Products";
         document.getElementById('filterTitle').innerText = "All Categories";
         categoryProducts = allProducts;
-        document.getElementById('subCatsSection').style.display = 'none'; 
+        document.getElementById('subCatsSection').style.display = 'none';
     }
 
     setupPriceRangeLimits();
     renderTopPicks();
-    if(currentMainCategory && !searchQ) renderSubCategoryCards();
+    if(currentMainCategory && !searchQ && currentMainCategory !== 'Trending') renderSubCategoryCards();
     renderFilterSidebar();
     applyFilters();
 }
@@ -479,7 +550,7 @@ function renderTopPicks() {
     const row2 = document.getElementById('topPicksRow2');
     row1.innerHTML = ''; row2.innerHTML = '';
 
-    const picks = categoryProducts.slice(0, 10);
+    const picks = categoryProducts.slice(0, 8);
 
     if(picks.length === 0) {
         document.getElementById('topPicksSection').style.display = 'none';
@@ -488,12 +559,8 @@ function renderTopPicks() {
 
     picks.forEach((p, i) => {
         const card = renderProductCard(p);
-        if(window.innerWidth < 768) {
-             if(i < 5) row1.appendChild(card);
-             else row2.appendChild(card);
-        } else {
-             row1.appendChild(card);
-        }
+        if (i % 2 === 0) row1.appendChild(card);
+        else row2.appendChild(card);
     });
 }
 
@@ -656,14 +723,14 @@ function renderBatch(products, start, batchSize, container, insertBefore = null)
 }
 
 function renderMainGrid(products) {
-    // Slice to exclude the top 10 already shown
-    products = products.slice(10);
+    // Slice to exclude the top 8 already shown
+    products = products.slice(8);
 
     const grid = document.getElementById('mainProductGrid');
     const countEl = document.getElementById('resultCount');
     grid.innerHTML = '';
 
-    const totalProducts = 10 + products.length;
+    const totalProducts = 8 + products.length;
 
     if(totalProducts === 0) {
         grid.innerHTML = `<div class="col-span-full text-center py-10 text-gray-500">No products found matching your filters.</div>`;
@@ -680,7 +747,7 @@ function renderMainGrid(products) {
     // Render in batches to prevent UI freeze
     renderBatch(products, 0, currentLoaded, grid);
 
-    const shown = 10 + currentLoaded;
+    const shown = 8 + currentLoaded;
     countEl.innerText = `Showing ${shown} of ${totalProducts} products`;
 
     if (showMoreButton) {
@@ -717,10 +784,10 @@ function renderProductCard(product) {
 
   const el = document.createElement('div');
   // Removed fixed widths here, controlled by parent container (grid or horizontal-scroll)
-  el.className = `bg-white p-4 rounded-xl shadow-sm border border-gray-100 relative flex flex-col pop-out-card`;
+  el.className = `bg-white p-4 rounded-xl shadow-sm border border-gray-100 relative flex flex-col pop-out-card h-80`;
 
   el.innerHTML = `
-    <a href="product.html?id=${encodeURIComponent(product.id)}" class="block mb-3 relative h-48 md:h-64 overflow-hidden rounded-lg flex items-center justify-center p-2 bg-white">
+    <a href="product.html?id=${encodeURIComponent(product.id)}" class="block mb-3 relative aspect-[4/5] overflow-hidden rounded-lg flex items-center justify-center p-2 bg-white">
       <img src="${product.image_url}" class="w-full h-full object-contain hover:scale-105 transition duration-300" loading="lazy" alt="${product.title}">
       ${disc ? `<span class="discount-badge absolute top-0 left-0 text-[10px] font-bold">-${disc}%</span>` : ''}
     </a>
@@ -737,9 +804,9 @@ function renderProductCard(product) {
                 ADD TO CART
             </button>
 
-            <a href="checkout.html?id=${encodeURIComponent(product.id)}" class="w-full py-1.5 bg-[#ea580c] text-white text-xs font-bold rounded text-center hover:bg-orange-700 transition">
+            <button onclick="buyNowSilent('${product.id}')" class="w-full py-1.5 bg-[#ea580c] text-white text-xs font-bold rounded text-center hover:bg-orange-700 transition">
               BUY NOW
-            </a>
+            </button>
         </div>
     </div>
   `;
