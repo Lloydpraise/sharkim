@@ -122,7 +122,8 @@ async function fetchProducts() {
             price: p.price,
             image_url: p.image_url,
             main_category: p.main_category,
-            original_price: p.original_price
+            original_price: p.original_price,
+            subcategory: p.sub_category || p.subcategory || ''
         })).sort((a, b) => a.id - b.id);
         localStorage.setItem('productMetadata', JSON.stringify(metadata));
 
@@ -766,7 +767,8 @@ let productClickedInAi = false;
 
 // Function to show modal
 function showExitModal() {
-    document.getElementById('exitIntentModal').classList.remove('hidden');
+    const modal = document.getElementById('exitIntentModal');
+    if (modal) modal.classList.remove('hidden');
 }
 
 // Function to show modal from triggers (only once)
@@ -779,7 +781,8 @@ function showExitModalFromTrigger() {
 
 // Skip modal
 function skipExitModal() {
-    document.getElementById('exitIntentModal').classList.add('hidden');
+    const modal = document.getElementById('exitIntentModal');
+    if (modal) modal.classList.add('hidden');
     showExitIntentButton();
 }
 
@@ -795,7 +798,8 @@ async function submitExitModal() {
 
     try {
         await client.from('community').insert([{ name, phone }]);
-        document.getElementById('exitIntentModal').classList.add('hidden');
+        const modal = document.getElementById('exitIntentModal');
+        if (modal) modal.classList.add('hidden');
         alert("Thank you! We'll contact you soon on WhatsApp.");
         // Reset modal shown flag so button shows again
         exitModalShown = false;
@@ -810,20 +814,23 @@ async function submitExitModal() {
 // Show exit intent button
 function showExitIntentButton() {
     if (!exitIntentButtonClosed) {
-        document.getElementById('exitIntentButton').classList.remove('hidden');
+        const btn = document.getElementById('exitIntentButton');
+        if (btn) btn.classList.remove('hidden');
     }
 }
 
 // Close exit intent button
 function closeExitIntentButton() {
-    document.getElementById('exitIntentButton').classList.add('hidden');
+    const btn = document.getElementById('exitIntentButton');
+    if (btn) btn.classList.add('hidden');
     exitIntentButtonClosed = true;
     localStorage.setItem('exitIntentButtonClosed', 'true');
 }
 
 // On load, hide button if closed
 if (exitIntentButtonClosed) {
-    document.getElementById('exitIntentButton').classList.add('hidden');
+    const btn = document.getElementById('exitIntentButton');
+    if (btn) btn.classList.add('hidden');
 }
 
 // Scroll trigger: if scroll for 6 seconds
@@ -851,7 +858,8 @@ injectAiUi = function() {
         const closeBtn = document.querySelector('#ai-search-modal button[onclick*="classList.add(\'hidden\')"]');
         if (closeBtn) {
             closeBtn.onclick = () => {
-                document.getElementById('ai-search-modal').classList.add('hidden');
+                const aiModal = document.getElementById('ai-search-modal');
+                if (aiModal) aiModal.classList.add('hidden');
                 if (aiModalOpened && !productClickedInAi) {
                     showExitModalFromTrigger();
                 }

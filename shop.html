@@ -486,12 +486,42 @@ async function init() {
     // Check for cached metadata first
     const cached = localStorage.getItem('productMetadata');
     if (cached) {
-        allProducts = JSON.parse(cached);
+        const parsed = JSON.parse(cached);
+        if (parsed.length > 0 && parsed[0].hasOwnProperty('subcategory')) {
+            // Cache has subcategory, use it
+            allProducts = parsed.map(p => ({
+                ...p,
+                main_category: p.main_category || 'Uncategorized',
+                subcategory: p.subcategory || ''
+            }));
+        } else {
+            // Old cache without subcategory, fetch fresh and update cache
+            const { data, error } = await client.from('products').select('*');
+            if (error) { console.error("Error fetching:", error); return; }
+
+            allProducts = (data || []).map(p => ({
+                ...p,
+                main_category: p.main_category || p.category || 'Uncategorized',
+                subcategory: p.sub_category || p.subcategory || ''
+            }));
+
+            // Update cache with subcategory
+            const metadata = allProducts.map(p => ({
+                id: p.id,
+                title: p.title,
+                price: p.price,
+                image_url: p.image_url,
+                main_category: p.main_category,
+                original_price: p.original_price,
+                subcategory: p.subcategory
+            })).sort((a, b) => a.id - b.id);
+            localStorage.setItem('productMetadata', JSON.stringify(metadata));
+        }
     } else {
-        // Fallback to fetch all
+        // No cache, fetch all
         const { data, error } = await client.from('products').select('*');
         if (error) { console.error("Error fetching:", error); return; }
-        
+
         allProducts = (data || []).map(p => ({
             ...p,
             main_category: p.main_category || p.category || 'Uncategorized',
@@ -505,7 +535,8 @@ async function init() {
             price: p.price,
             image_url: p.image_url,
             main_category: p.main_category,
-            original_price: p.original_price
+            original_price: p.original_price,
+            subcategory: p.subcategory
         })).sort((a, b) => a.id - b.id);
         localStorage.setItem('productMetadata', JSON.stringify(metadata));
     }
@@ -624,7 +655,9 @@ function renderSubCategoryCards() {
         card.onclick = () => { selectSubCategory(sub); };
 
         // Desktop
-        desktopGrid.appendChild(card.cloneNode(true)); // Clone for desktop grid
+        const desktopCard = card.cloneNode(true);
+        desktopCard.onclick = () => { selectSubCategory(sub); };
+        desktopGrid.appendChild(desktopCard);
 
         // Mobile
         const mobileCard = card.cloneNode(true);
@@ -723,14 +756,12 @@ function renderBatch(products, start, batchSize, container, insertBefore = null)
 }
 
 function renderMainGrid(products) {
-    // Slice to exclude the top 8 already shown
-    products = products.slice(8);
-
+    // products is already filtered
     const grid = document.getElementById('mainProductGrid');
     const countEl = document.getElementById('resultCount');
     grid.innerHTML = '';
 
-    const totalProducts = 8 + products.length;
+    const totalProducts = products.length;
 
     if(totalProducts === 0) {
         grid.innerHTML = `<div class="col-span-full text-center py-10 text-gray-500">No products found matching your filters.</div>`;
@@ -738,17 +769,22 @@ function renderMainGrid(products) {
         return;
     }
 
+    const isSub = currentSubCategory !== '';
+    // If subcategory selected, show all filtered products in grid, else slice after top picks
+    const gridProducts = isSub ? products : products.slice(8);
     let currentLoaded = 0;
-    let showMoreButton = products.length > 50;
+    let showMoreButton = gridProducts.length > 50;
 
     // Always show 50 initially, with show more if more
-    currentLoaded = Math.min(50, products.length);
+    currentLoaded = Math.min(50, gridProducts.length);
 
     // Render in batches to prevent UI freeze
-    renderBatch(products, 0, currentLoaded, grid);
+    renderBatch(gridProducts, 0, currentLoaded, grid);
 
-    const shown = 8 + currentLoaded;
-    countEl.innerText = `Showing ${shown} of ${totalProducts} products`;
+    const wholeTotal = categoryProducts.length;
+    const shown = isSub ? totalProducts : Math.min(wholeTotal, 8 + currentLoaded);
+    const countText = isSub ? `Showing ${shown} out of ${wholeTotal} products` : `Showing ${shown} of ${wholeTotal} products`;
+    countEl.innerText = countText;
 
     if (showMoreButton) {
         const buttonDiv = document.createElement('div');
@@ -762,11 +798,12 @@ function renderMainGrid(products) {
 
         const loadMore = () => {
             const nextBatchSize = 50;
-            const added = renderBatch(products, currentLoaded, nextBatchSize, grid, buttonDiv);
+            const added = renderBatch(gridProducts, currentLoaded, nextBatchSize, grid, buttonDiv);
             currentLoaded += added;
-            const newShown = 10 + currentLoaded;
-            countEl.innerText = `Showing ${newShown} of ${totalProducts} products`;
-            if (currentLoaded >= products.length) {
+            const newShown = isSub ? totalProducts : Math.min(wholeTotal, 8 + currentLoaded);
+            const newCountText = isSub ? `Showing ${newShown} out of ${wholeTotal} products` : `Showing ${newShown} of ${wholeTotal} products`;
+            countEl.innerText = newCountText;
+            if (currentLoaded >= gridProducts.length) {
                 buttonDiv.remove();
             }
         };
