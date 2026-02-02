@@ -1,3 +1,13 @@
+// Always fetch the latest image for a product from Supabase by ID
+async function fetchLatestImageUrl(productId) {
+    try {
+        const { data, error } = await client.from('products').select('images, image_url').eq('id', productId).single();
+        if (error || !data) return 'images/sharkim_gold_logo.png';
+        if (data.images && Array.isArray(data.images) && data.images.length) return data.images[0];
+        if (data.image_url) return data.image_url;
+        return 'images/sharkim_gold_logo.png';
+    } catch (e) { return 'images/sharkim_gold_logo.png'; }
+}
 
 // 1. CONFIGURATION
 const SUPABASE_URL = 'https://ljxvxbjhkgoeygpyejkc.supabase.co/';
@@ -24,7 +34,7 @@ function buildMobileMenu(){
   mobileMenuListItems.innerHTML = '';
   (window.MAIN_CATEGORIES || []).forEach(cat => {
     const li = document.createElement('li');
-    li.innerHTML = `<a onclick="logEvent('view_category', { category: '${cat}' })" class="block px-4 py-3 rounded-lg text-gray-700 font-medium hover:bg-gray-100 hover:text-[#ea580c] transition" href="shop.html?main=${encodeURIComponent(cat)}">${cat}</a>`;
+    li.innerHTML = `<a onclick="logEvent('view_category', { category: '${cat}' }); if(window.fbq){ fbq('track','ViewContent',{content_category: '${cat}'}); }" class="block px-4 py-3 rounded-lg text-gray-700 font-medium hover:bg-gray-100 hover:text-[#ea580c] transition" href="shop.html?main=${encodeURIComponent(cat)}">${cat}</a>`;
     mobileMenuListItems.appendChild(li);
   });
 }
@@ -39,7 +49,7 @@ function buildDesktopCategories(){
   wrap.innerHTML = '';
   (window.MAIN_CATEGORIES || []).forEach(cat => {
     const li = document.createElement('li');
-    li.innerHTML = `<a onclick="logEvent('view_category', { category: '${cat}' })" class="block px-3 py-2 rounded hover:bg-gray-100 hover:text-[#ea580c] transition font-medium" href="shop.html?main=${encodeURIComponent(cat)}">${cat}</a>`;
+    li.innerHTML = `<a onclick="logEvent('view_category', { category: '${cat}' }); if(window.fbq){ fbq('track','ViewContent',{content_category: '${cat}'}); }" class="block px-3 py-2 rounded hover:bg-gray-100 hover:text-[#ea580c] transition font-medium" href="shop.html?main=${encodeURIComponent(cat)}">${cat}</a>`;
     wrap.appendChild(li);
   });
 }
@@ -62,129 +72,175 @@ if (slides.length > 1) { setInterval(nextSlide, 5000); }
 let allProducts = [];
 let isFetching = false;
 
+// --- STRICT URL SANITIZER (Fixes the blob/netlify errors) ---
+function getSafeImageUrl(p) {
+    let url = 'images/sharkim_gold_logo.png';
+
+    // 1. Try 'images' Array (Prioritize this!)
+    let imagesArray = p.images;
+    // Handle Supabase returning stringified JSON "['url']" instead of array
+    if (typeof imagesArray === 'string' && imagesArray.startsWith('[')) {
+        try { imagesArray = JSON.parse(imagesArray); } catch(e){}
+    }
+    
+    if (Array.isArray(imagesArray) && imagesArray.length > 0) {
+        url = imagesArray[0];
+    } else if (p.image_url) {
+        url = p.image_url;
+    }
+
+    // 2. Sanitize
+    if (!url || typeof url !== 'string') return 'images/sharkim_gold_logo.png';
+    const lower = url.toLowerCase();
+    
+    // 3. BLOCK BAD URLS 
+    if (lower.includes('blob:') || lower.includes('netlify') || !lower.startsWith('http')) {
+        // If it's a relative local path, allow it (e.g. 'images/logo.png'), otherwise block
+        if (!lower.startsWith('images/')) return 'images/sharkim_gold_logo.png';
+    }
+
+    return url;
+}
+
+// --- MAIN FETCH FUNCTION ---
 async function fetchProducts() {
     if (isFetching) return;
     isFetching = true;
 
-    console.time("⚡_Initial_Render");
-    
+    // 1. Wipe old cache (Critical)
+    try { localStorage.removeItem('productMetadata'); } catch(e) {}
+
+    console.time("⚡_Fast_Load");
+
     try {
-        // 1. CATEGORY & TOP ITEMS FETCH
-        // We fetch the latest products from our MAIN_CATEGORIES specifically 
-        // to ensure the "Top Categories" section is populated instantly.
-        const categoriesToFetch = window.MAIN_CATEGORIES || [];
-        
-        const { data: categoryData, error: catError } = await client
+        const UI_COLUMNS = 'id, title, price, original_price, image_url, images, main_category, subcategory';
+
+        // --- STEP 1: INSTANT GRID (Top 30) ---
+        // We fetch these to fill "You May Like" immediately.
+        const { data: recentData, error: recentError } = await client
             .from('products')
-            .select('id, title, price, image_url, main_category, original_price')
-            .in('main_category', categoriesToFetch)
+            .select(UI_COLUMNS)
             .order('created_at', { ascending: false })
-            .limit(40); // Grab enough to cover all categories + flash sales
+            .limit(30);
 
-        if (catError) throw catError;
-
-        if (categoryData) {
-            const mappedFast = categoryData.map(p => ({
+        if (recentData) {
+            // Process & Clean Data
+            let currentItems = recentData.map(p => ({
                 ...p,
+                image_url: getSafeImageUrl(p), // <--- Uses strict cleaner
                 category: p.main_category || 'Uncategorized',
-                image_url: p.image_url || 'images/sharkim_gold_logo.png'
+                subcategory: p.subcategory || ''
             }));
 
-            // Immediately Render the visual "Skeleton" of the page
-            distributeTopSections(mappedFast); 
+            // UPDATE GLOBAL & RENDER GRID IMMEDIATELY
+            allProducts = currentItems;
+            renderInitialGrid(currentItems); // "You May Like" appears now!
+            console.timeEnd("⚡_Fast_Load");
+
+            // --- STEP 2: FILL MISSING CATEGORIES (Top Sections) ---
+            // Now that the user has something to look at, we fix the category sections.
+            const neededCats = window.MAIN_CATEGORIES || ['Electronics', 'Fashion', 'Home', 'Beauty'];
+            const foundCats = new Set(currentItems.map(i => i.category));
+            const missingCats = neededCats.filter(c => !foundCats.has(c));
+
+            if (missingCats.length > 0) {
+                // Fetch 1 leader for each missing category
+                const promises = missingCats.map(cat => 
+                    client.from('products')
+                        .select(UI_COLUMNS)
+                        .eq('main_category', cat)
+                        .limit(1)
+                        .then(res => res.data ? res.data[0] : null)
+                );
+                
+                const leaders = await Promise.all(promises);
+                leaders.forEach(l => {
+                    if (l) {
+                        currentItems.push({
+                            ...l,
+                            image_url: getSafeImageUrl(l),
+                            category: l.main_category,
+                            subcategory: l.subcategory || ''
+                        });
+                    }
+                });
+                
+                // Update global again with category leaders
+                allProducts = currentItems;
+            }
+
+            // Render the Top Sections (Hero/Categories) now that we have data
+            distributeTopSections(allProducts);
             
-            // Fill the "You May Also Like" with the first 18 we just got
-            const initial18 = mappedFast.slice(0, 18);
-            renderInitialGrid(initial18);
-            
-            console.timeEnd("⚡_Initial_Render");
+            // Initialize lazy loading for remaining products
+            initBottomLazyLoader();
         }
 
-        // 2. BACKGROUND FULL LOAD
-        // Now fetch everything else for the search and scrolling
-        const { data: fullData, error: fullError } = await client
-            .from('products')
-            .select('*')
-            .order('created_at', { ascending: false });
-
-        if (fullError) throw fullError;
-
-        allProducts = fullData.map(p => ({
-            ...p,
-            category: p.main_category || 'Uncategorized',
-            image_url: p.image_url || 'images/sharkim_gold_logo.png'
-        }));
-
-        // Cache metadata for faster shop loading
-        const metadata = allProducts.map(p => ({
-            id: p.id,
-            title: p.title,
-            price: p.price,
-            image_url: p.image_url,
-            main_category: p.main_category,
-            original_price: p.original_price,
-            subcategory: p.sub_category || p.subcategory || ''
-        })).sort((a, b) => a.id - b.id);
-        localStorage.setItem('productMetadata', JSON.stringify(metadata));
-
-        console.log(`LOG: Full load complete (${allProducts.length} items).`);
-        initBottomLazyLoader();
-
     } catch (err) {
-        console.error("Fetch Error:", err.message);
-    } finally {
-        isFetching = false;
+        console.error("Load Error:", err);
     }
 }
-/**
- * Renders Top Categories and Flash Sales immediately
- */
+
+// Helper function to render top sections (categories)
 function distributeTopSections(products) {
     const topCatsContainer = document.getElementById('topCategoriesContainer');
-    const flashSalesContainer = document.getElementById('flashSalesContainer');
     const roundCategoriesContainer = document.getElementById('roundCategoriesContainer');
+    
+    // Clear existing content
+    if (topCatsContainer) topCatsContainer.innerHTML = '';
+    if (roundCategoriesContainer) roundCategoriesContainer.innerHTML = '';
 
-    [topCatsContainer, flashSalesContainer, roundCategoriesContainer].forEach(c => { if(c) c.innerHTML = ''; });
+    // Helper: Find a product in a category that ACTUALLY HAS AN IMAGE
+    const getVisualLeader = (catName) => {
+        const goodProduct = products.find(p => 
+            (p.category === catName || p.main_category === catName) && 
+            p.image_url && 
+            !p.image_url.includes('sharkim_gold_logo')
+        );
+        if (goodProduct) return goodProduct;
+        return products.find(p => p.category === catName || p.main_category === catName);
+    };
 
-    // 1. Top Categories
+    // TOP CATEGORIES (Square Cards)
     const topCats = (window.MAIN_CATEGORIES || []).slice(0, 4);
     topCats.forEach(cat => {
-        const catP = products.filter(p => p.category === cat);
-        const img = catP.length > 0 ? catP[0].image_url : 'images/sharkim_gold_logo.png';
+        const prod = getVisualLeader(cat);
+        const img = prod ? getSafeImageUrl(prod) : 'images/sharkim_gold_logo.png';
+
         const el = document.createElement('a');
         el.href = `shop.html?main=${encodeURIComponent(cat)}`;
         el.className = "flex flex-col group";
         el.innerHTML = `
-            <div class="overflow-hidden rounded-xl h-40 md:h-56 mb-2 border border-gray-100 shadow-sm">
-                <img src="${img}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" loading="eager">
+            <div class="overflow-hidden rounded-xl h-40 md:h-56 mb-2 border border-gray-100 shadow-sm bg-gray-50">
+                <img src="${img}" 
+                     class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" 
+                     loading="eager" 
+                     alt="${cat}"
+                     onerror="this.onerror=null;this.src='images/sharkim_gold_logo.png'">
             </div>
             <span class="text-center font-bold text-gray-800 group-hover:text-[#ea580c]">${cat}</span>
         `;
-        if(topCatsContainer) topCatsContainer.appendChild(el);
+        if (topCatsContainer) topCatsContainer.appendChild(el);
     });
 
-    // 2. Flash Sales (First 4)
-    products.slice(0, 4).forEach(p => {
-        if(flashSalesContainer) flashSalesContainer.appendChild(renderCard(p, true));
-    });
+    // ROUND CATEGORIES
+    const roundCats = (window.MAIN_CATEGORIES || []).slice(0, 6);
+    roundCats.forEach(cat => {
+        const prod = getVisualLeader(cat);
+        const img = prod ? getSafeImageUrl(prod) : 'images/sharkim_gold_logo.png';
 
-    // 3. Round Categories
-    (window.MAIN_CATEGORIES || []).slice(0, 6).forEach(cat => {
-        const catP = products.filter(p => p.category === cat);
-        const img = catP.length > 0 ? catP[0].image_url : 'images/sharkim_gold_logo.png';
         const el = document.createElement('a');
         el.href = `shop.html?main=${encodeURIComponent(cat)}`;
         el.className = "flex flex-col items-center group";
         el.innerHTML = `
-            <div class="w-20 h-20 md:w-28 md:h-28 rounded-full shadow-md overflow-hidden mb-2 border-2 border-transparent group-hover:border-[#ea580c] transition">
-                <img src="${img}" class="w-full h-full object-cover" loading="lazy">
+            <div class="w-20 h-20 md:w-28 md:h-28 rounded-full shadow-md overflow-hidden mb-2 border-2 border-transparent group-hover:border-[#ea580c] transition bg-gray-50">
+                <img src="${img}" class="w-full h-full object-cover" loading="lazy" alt="${cat}">
             </div>
             <span class="text-xs md:text-sm font-semibold text-center text-gray-800 group-hover:text-[#ea580c]">${cat}</span>
         `;
-        if(roundCategoriesContainer) roundCategoriesContainer.appendChild(el);
+        if (roundCategoriesContainer) roundCategoriesContainer.appendChild(el);
     });
 }
-
 /**
  * Renders the 18 random products instantly
  */
@@ -252,9 +308,10 @@ function renderCard(product, isPopOut){
 
       el.innerHTML = `
     <a href="product.html?id=${encodeURIComponent(product.id)}" class="block mb-3 relative h-48 md:h-64 w-48 md:w-64 overflow-hidden rounded-lg flex items-center justify-center p-2 bg-white">
-      <img src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" data-src="${product.image_url}" class="w-full h-full object-contain hover:scale-105 transition duration-300" decoding="async" alt="${product.title}" width="600" height="400"
+      <img src="${product.image_url}" class="w-full h-full object-contain hover:scale-105 transition duration-300" decoding="async" alt="${product.title}" width="600" height="400"
         srcset="${product.image_url} 600w, ${product.image_url.replace(/\.(jpg|jpeg|png)$/i, '-small.$1')} 300w"
         sizes="(max-width:640px) 90vw, 25vw"
+        loading="lazy"
         onerror="this.onerror=null; this.src='images/sharkim_gold_logo.png'; this.srcset='';">
       ${disc ? `<span class="discount-badge absolute top-0 left-0 text-[10px] font-bold">-${disc}%</span>` : ''}
     </a>
@@ -627,27 +684,40 @@ async function loadSiteContent() {
 
     // 2. RENDER FLASH SALE
     const flashSection = document.getElementById('flashSaleSection');
-    if(flashSection && settings.flash_sale && settings.flash_sale.active) {
-        const { end_time, product_ids } = settings.flash_sale;
-        const now = new Date();
-        const end = new Date(end_time);
-
-        if(end > now && product_ids && product_ids.length > 0) {
-            flashSection.classList.remove('hidden');
-            
-            // Start Timer
-            startFlashTimer(end);
-
-            // Fetch Flash Products
-            const { data: products } = await client.from('products').select('*').in('id', product_ids);
-            if(products) {
-                renderFlashItems(products);
+    if (flashSection) {
+        try {
+            // Support both JSON-string and object storage for `flash_sale`
+            let flashCfg = settings.flash_sale;
+            if (typeof flashCfg === 'string') {
+                try { flashCfg = JSON.parse(flashCfg); } catch (e) { flashCfg = {}; }
             }
-        } else {
+
+            if (flashCfg && flashCfg.active) {
+                const { end_time, product_ids } = flashCfg;
+                const now = new Date();
+                const end = end_time ? new Date(end_time) : null;
+
+                // If there are product IDs, always show the section when admin enabled it.
+                if (Array.isArray(product_ids) && product_ids.length > 0) {
+                    flashSection.classList.remove('hidden');
+
+                    // If end time is in the future, start the timer. If in the past, show without timer.
+                    if (end && end > now) {
+                        startFlashTimer(end);
+                    }
+
+                    // Fetch Flash Products
+                    const { data: products } = await client.from('products').select('*').in('id', product_ids || []);
+                    if (products) renderFlashItems(products);
+                } else {
+                    flashSection.classList.add('hidden');
+                }
+            } else {
+                flashSection.classList.add('hidden');
+            }
+        } catch (e) {
             flashSection.classList.add('hidden');
         }
-    } else if(flashSection) {
-        flashSection.classList.add('hidden');
     }
 }
 
@@ -655,14 +725,25 @@ function startFlashTimer(endTime) {
     const hEl = document.getElementById('flashH');
     const mEl = document.getElementById('flashM');
     const sEl = document.getElementById('flashS');
-    
-    const timerInterval = setInterval(() => {
-        const now = new Date().getTime();
-        const dist = new Date(endTime).getTime() - now;
-        
-        if (dist < 0) {
-            clearInterval(timerInterval);
-            document.getElementById('flashSaleSection').classList.add('hidden');
+    // Normalize endTime to a Date instance
+    const endDate = endTime instanceof Date ? endTime : new Date(endTime);
+    if (isNaN(endDate)) {
+        if (hEl) hEl.innerText = '00';
+        if (mEl) mEl.innerText = '00';
+        if (sEl) sEl.innerText = '00';
+        return;
+    }
+
+    function updateClock() {
+        const now = Date.now();
+        const dist = endDate.getTime() - now;
+
+        if (dist <= 0) {
+            // Timer expired — show zeros and stop
+            if (hEl) hEl.innerText = '00';
+            if (mEl) mEl.innerText = '00';
+            if (sEl) sEl.innerText = '00';
+            if (window.flashTimerInterval) clearInterval(window.flashTimerInterval);
             return;
         }
 
@@ -670,24 +751,47 @@ function startFlashTimer(endTime) {
         const m = Math.floor((dist % (1000 * 60 * 60)) / (1000 * 60));
         const s = Math.floor((dist % (1000 * 60)) / 1000);
 
-        if (hEl) hEl.innerText = h.toString().padStart(2, '0');
-        if (mEl) mEl.innerText = m.toString().padStart(2, '0');
-        if (sEl) sEl.innerText = s.toString().padStart(2, '0');
-    }, 1000);
+        if (hEl) hEl.innerText = String(h).padStart(2, '0');
+        if (mEl) mEl.innerText = String(m).padStart(2, '0');
+        if (sEl) sEl.innerText = String(s).padStart(2, '0');
+    }
+
+    // Update immediately, then every second
+    updateClock();
+    if (window.flashTimerInterval) clearInterval(window.flashTimerInterval);
+    window.flashTimerInterval = setInterval(updateClock, 1000);
 }
 // Helper: Render Flash Items
 function renderFlashItems(products) {
     const container = document.getElementById('flashItemsContainer'); // Add this ID to your flash sale grid in index.html
     if(!container) return;
-
-    container.innerHTML = products.map(p => `
-        <div class="pop-out-card bg-white p-3 rounded-lg shadow border border-orange-100">
-            <img src="${p.images?.[0] || p.image_url}" class="w-full h-32 object-contain mb-2">
-            <div class="font-bold text-sm truncate">${p.title}</div>
-            <div class="text-brand-orange font-bold">Ksh ${p.price}</div>
-            <button onclick="addToCart('${p.id}')" class="w-full mt-2 bg-brand-orange text-white text-xs py-2 rounded">Add to Cart</button>
+    container.innerHTML = products.map(p => {
+        const disc = (p.original_price && p.original_price > p.price)
+            ? Math.round(((p.original_price - p.price)/p.original_price)*100) : 0;
+        return `
+        <div class="pop-out-card bg-white p-3 rounded-lg shadow border border-orange-100 relative flex flex-col h-80">
+            <a href="product.html?id=${encodeURIComponent(p.id)}" class="block mb-3 relative aspect-[4/5] overflow-hidden rounded-lg flex items-center justify-center p-2 bg-white">
+                <img src="${p.images?.[0] || p.image_url}" class="w-full h-full object-contain hover:scale-105 transition duration-300" loading="lazy" alt="${p.title}">
+                ${disc ? `<span class="absolute top-0 right-0 bg-orange-500 text-white text-[20px] font-bold px-2 py-1 rounded">-${disc}%</span>` : ''}
+            </a>
+            <div class="flex-1 flex flex-col">
+                <h3 class="text-sm font-bold text-gray-800 line-clamp-1 leading-tight mb-1 overflow-hidden text-ellipsis whitespace-nowrap">${p.title}</h3>
+                <div class="mb-2">
+                    ${p.original_price ? `<span class="text-xs text-gray-400 line-through mr-1">Ksh ${p.original_price}</span>` : ''}
+                    <span class="text-base font-bold text-brand-orange">Ksh ${p.price}</span>
+                </div>
+                <div class="mt-auto flex flex-col gap-2">
+                    <button onclick="addToCart('${p.id}')" class="w-full py-1.5 border border-gray-200 bg-white text-gray-800 text-xs font-bold rounded hover:bg-gray-50 hover:text-[#ea580c] transition">
+                        ADD TO CART
+                    </button>
+                    <button onclick="buyNowSilent('${p.id}')" class="w-full py-1.5 bg-[#ea580c] text-white text-xs font-bold rounded text-center hover:bg-orange-700 transition">
+                        BUY NOW
+                    </button>
+                </div>
+            </div>
         </div>
-    `).join('');
+        `;
+    }).join('');
 }
 
 // Helper: Simple Slider Reset
@@ -724,23 +828,44 @@ fetchProducts();
 async function initSession() {
     const now = new Date();
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ? 'Mobile' : 'Desktop';
+    try {
+        // If we don't have a session, or it's a local placeholder, create on server
+        if (!currentSessionId || String(currentSessionId).startsWith('local-')) {
+            const { data, error } = await client.from('site_sessions')
+                .insert([{ device_type: isMobile }])
+                .select()
+                .single();
 
-    if (!currentSessionId) {
-        // Create new session
-        const { data, error } = await client.from('site_sessions')
-            .insert([{ device_type: isMobile }])
-            .select()
-            .single();
-        
-        if (data) {
-            currentSessionId = data.session_id;
-            localStorage.setItem('site_session_id', currentSessionId);
+            if (error) {
+                console.warn('initSession insert error', error);
+                return;
+            }
+            if (data) {
+                currentSessionId = data.session_id;
+                localStorage.setItem('site_session_id', currentSessionId);
+            }
+            return;
         }
-    } else {
-        // Update last active time
-        await client.from('site_sessions')
+
+        // Otherwise, try to update the existing session's last active time.
+        const { error } = await client.from('site_sessions')
             .update({ last_active_at: now })
             .eq('session_id', currentSessionId);
+
+        // If update failed (bad session id), create a new server session and overwrite local
+        if (error) {
+            console.warn('initSession update failed, inserting new session:', error.message || error);
+            const { data: newData, error: insertErr } = await client.from('site_sessions')
+                .insert([{ device_type: isMobile }])
+                .select()
+                .single();
+            if (!insertErr && newData) {
+                currentSessionId = newData.session_id;
+                localStorage.setItem('site_session_id', currentSessionId);
+            }
+        }
+    } catch (e) {
+        console.warn('initSession exception', e);
     }
 }
 
@@ -827,6 +952,15 @@ function closeExitIntentButton() {
     localStorage.setItem('exitIntentButtonClosed', 'true');
 }
 
+// Permanently dismiss the exit modal and the floating button
+function dismissExitModalForever() {
+    const modal = document.getElementById('exitIntentModal');
+    if (modal) modal.classList.add('hidden');
+    // Hide the floating button and persist the choice
+    closeExitIntentButton();
+    exitModalShown = true;
+    localStorage.setItem('exitModalShown', 'true');
+}
 // On load, hide button if closed
 if (exitIntentButtonClosed) {
     const btn = document.getElementById('exitIntentButton');

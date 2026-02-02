@@ -2,14 +2,31 @@
 <html lang="en">
 
 <head>
-  <script async src="https://www.googletagmanager.com/gtag/js?id=AW-17577238441"></script>
-  <script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=AW-17577238441"></script>
+<script>
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
     gtag('js', new Date());
 
     gtag('config', 'AW-17577238441');
-  </script>
+</script>
+<!-- Meta Pixel Code -->
+<script>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '1815039102579831');
+fbq('track', 'PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=1815039102579831&ev=PageView&noscript=1"
+/></noscript>
+<!-- End Meta Pixel Code -->
   
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
@@ -117,6 +134,7 @@
     .line-clamp-2 {
         display: -webkit-box;
         -webkit-line-clamp: 2;
+        line-clamp: 2;
         -webkit-box-orient: vertical;
         overflow: hidden;
     }
@@ -223,6 +241,20 @@
               <span id="pDisc" class="hidden bg-red-100 text-red-600 text-xs font-bold px-2 py-1 rounded"></span>
           </div>
 
+          <div id="flashBanner" class="hidden bg-orange-500 text-white p-3 rounded-lg mt-2 flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                  <span class="font-bold">Flash Sale</span>
+                  <span class="text-yellow-400 animate-pulse">⚡</span>
+              </div>
+              <div class="flex items-center gap-1 font-mono font-bold">
+                  <div id="pFlashH" class="bg-white text-orange-500 rounded px-2 py-1">00</div>
+                  <span>:</span>
+                  <div id="pFlashM" class="bg-white text-orange-500 rounded px-2 py-1">00</div>
+                  <span>:</span>
+                  <div id="pFlashS" class="bg-white text-orange-500 rounded px-2 py-1">00</div>
+              </div>
+          </div>
+
           <div id="variantBox" class="hidden">
             <label class="block text-sm font-semibold text-gray-700 mb-2">Select Option:</label>
             <div id="variantOptions" class="flex flex-wrap gap-2"></div>
@@ -243,7 +275,7 @@
               <button id="btnCartDesktop" class="flex-1 bg-white border-2 border-[#ea580c] text-[#ea580c] text-lg font-bold py-3 rounded-lg hover:bg-orange-50 transition shadow-sm">
                   Add to Cart
               </button>
-              <button id="btnBuyDesktop" onclick="buyNowSilent('${p.id}')" class="flex-1 bg-[#ea580c] text-white text-lg font-bold py-3 rounded-lg hover:bg-orange-700 transition shadow-md">
+              <button id="btnBuyDesktop" class="flex-1 bg-[#ea580c] text-white text-lg font-bold py-3 rounded-lg hover:bg-orange-700 transition shadow-md">
                   Buy Now
               </button>
           </div>
@@ -313,7 +345,7 @@
     <button id="btnCartMobile" class="flex-1 bg-white border border-[#ea580c] text-[#ea580c] font-bold py-3 rounded shadow-sm">
         Add to Cart
     </button>
-    <button id="btnBuyMobile" onclick="buyNowSilent('${p.id}')" class="flex-1 bg-[#ea580c] text-white font-bold py-3 rounded shadow-sm">
+    <button id="btnBuyMobile" class="flex-1 bg-[#ea580c] text-white font-bold py-3 rounded shadow-sm">
         Buy Now
     </button>
 </div>
@@ -362,8 +394,18 @@ let searchHistory = [];
     const params = new URLSearchParams(window.location.search);
     const productId = params.get('id');
 
+    async function loadSettings() {
+        const { data: settings, error } = await client.from('site_settings').select('*').single();
+        if (error) return null;
+        return settings;
+    }
+
     async function loadProduct() {
     if (!productId) return;
+
+    // Load settings to check flash sale
+    const settings = await loadSettings();
+    const isFlash = settings && settings.flash_sale && settings.flash_sale.active && settings.flash_sale.product_ids && settings.flash_sale.product_ids.includes(productId);
 
     // 1. FETCH MAIN PRODUCT (Including Embedding for Vector search)
     const { data: product, error } = await client
@@ -380,7 +422,7 @@ let searchHistory = [];
     // Log the view event
     logEvent('view_product', {}, productId);
 
-    renderMainProduct(product);
+    renderMainProduct(product, isFlash, settings?.flash_sale?.end_time);
     
     loadRelatedProducts(product.embedding, product.id);
 
@@ -392,9 +434,18 @@ let searchHistory = [];
 }
 
 
-    function renderMainProduct(p) {
+    function renderMainProduct(p, isFlash, endTime) {
     document.title = `${p.title} - Sharkim Traders`;
-    
+
+    // Track ViewContent event
+    fbq('track', 'ViewContent', {
+        content_name: p.title,
+        content_ids: [p.id],
+        content_type: 'product',
+        value: p.price,
+        currency: 'KES'
+    });
+
     // Set Image and Title
     document.getElementById('pImg').src = p.image_url;
     document.getElementById('pImg').alt = p.title;
@@ -410,6 +461,13 @@ let searchHistory = [];
         const pct = Math.round(((p.original_price - p.price) / p.original_price) * 100);
         discEl.textContent = `-${pct}% OFF`;
         discEl.classList.remove('hidden');
+    }
+
+    // Flash Sale Banner
+    if (isFlash) {
+        const banner = document.getElementById('flashBanner');
+        banner.classList.remove('hidden');
+        startFlashTimer(endTime);
     }
 
     // --- Stock & Sales Logic ---
@@ -463,14 +521,23 @@ let searchHistory = [];
         alert('Added to cart!');
     };
 
+    const handleBuyNow = () => {
+        if (isOutOfStock) return alert('This item is currently out of stock.');
+        window.buyNowSilent(p.id);
+    };
+
     const btnCartD = document.getElementById('btnCartDesktop');
     const btnCartM = document.getElementById('btnCartMobile');
+    const btnBuyD = document.getElementById('btnBuyDesktop');
+    const btnBuyM = document.getElementById('btnBuyMobile');
     
     if(btnCartD) btnCartD.onclick = handleAdd;
     if(btnCartM) btnCartM.onclick = handleAdd;
+    if(btnBuyD) btnBuyD.onclick = handleBuyNow;
+    if(btnBuyM) btnBuyM.onclick = handleBuyNow;
 
     if (isOutOfStock) {
-        [btnCartD, btnCartM].forEach(btn => {
+        [btnCartD, btnCartM, btnBuyD, btnBuyM].forEach(btn => {
             if(btn) {
                 btn.disabled = true;
                 btn.classList.add('opacity-50', 'cursor-not-allowed');
@@ -478,6 +545,30 @@ let searchHistory = [];
             }
         });
     }
+}
+
+function startFlashTimer(endTime) {
+    if (!endTime) return;
+    const end = new Date(endTime);
+    function updateClock() {
+        const now = new Date();
+        const diff = end - now;
+        if (diff <= 0) {
+            document.getElementById('pFlashH').textContent = '00';
+            document.getElementById('pFlashM').textContent = '00';
+            document.getElementById('pFlashS').textContent = '00';
+            clearInterval(window.pFlashTimerInterval);
+            return;
+        }
+        const hours = Math.floor(diff / (1000 * 60 * 60));
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+        document.getElementById('pFlashH').textContent = hours.toString().padStart(2, '0');
+        document.getElementById('pFlashM').textContent = minutes.toString().padStart(2, '0');
+        document.getElementById('pFlashS').textContent = seconds.toString().padStart(2, '0');
+    }
+    updateClock();
+    window.pFlashTimerInterval = setInterval(updateClock, 1000);
 }
 
 async function loadCategoryUpsells(category, currentId) {
@@ -890,6 +981,30 @@ function renderBottomRows() {
     });
 }
     loadProduct();
+</script>
+
+<!-- Floating WhatsApp Button -->
+<a id="whatsappBtn" href="javascript:void(0);" onclick="openWhatsApp()" class="fixed bottom-6 right-6 z-50 w-16 h-16 bg-[#25D366] hover:bg-[#1fbb57] text-white rounded-full shadow-lg flex items-center justify-center transition-all transform hover:scale-110 hover:shadow-xl" title="Chat with us on WhatsApp" aria-label="Open WhatsApp">
+    <img src="images/whatsapp.svg" alt="WhatsApp" class="w-8 h-8" />
+</a>
+
+<script>
+function openWhatsApp() {
+    const phoneNumber = "254704843554";
+    const productLink = window.location.href;
+    const message = `Hello! I'm interested in this product: ${productLink}`;
+    const encodedMsg = encodeURIComponent(message);
+    
+    const appLink = `whatsapp://send?phone=${phoneNumber}&text=${encodedMsg}`;
+    const webLink = `https://wa.me/${phoneNumber}?text=${encodedMsg}`;
+    
+    if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+        window.location.href = appLink;
+        setTimeout(() => { window.location.href = webLink; }, 2000);
+    } else {
+        window.open(webLink, '_blank');
+    }
+}
 </script>
 </body>
 </html>

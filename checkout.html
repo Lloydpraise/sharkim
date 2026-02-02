@@ -2,12 +2,46 @@
 <html lang="en">
 <head>
   <script async src="https://www.googletagmanager.com/gtag/js?id=AW-17577238441"></script>
-  <script>
+<script>
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
     gtag('js', new Date());
     gtag('config', 'AW-17577238441');
   </script>
+<script>
+function gtag_report_conversion(url, value, transaction_id) {
+  var callback = function () {
+    if (typeof(url) != 'undefined') {
+      window.location = url;
+    }
+  };
+  gtag('event', 'conversion', {
+      'send_to': 'AW-17577238441/ItUjCNeUnfEbEKm_vb1B',
+      'value': value,
+      'currency': 'KES',
+      'transaction_id': transaction_id,
+      'event_callback': callback
+  });
+  return false;
+}
+</script>
+<!-- Meta Pixel Code -->
+<script>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '1815039102579831');
+fbq('track', 'PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=1815039102579831&ev=PageView&noscript=1"
+/></noscript>
+<!-- End Meta Pixel Code -->
   
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -116,6 +150,11 @@
                 <h2 class="text-lg font-bold text-gray-800 mb-4 border-b pb-2">Products Ordered</h2>
                 <div id="checkoutItemsList" class="space-y-4">
                     </div>
+                <div class="mt-4 pt-3 border-t border-gray-100">
+                    <button onclick="window.location.href='shop.html'" class="text-sm text-[#ea580c] hover:text-orange-700 font-medium hover:underline transition">
+                        Add another Product? Click Here
+                    </button>
+                </div>
             </section>
 
             <section class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
@@ -124,13 +163,23 @@
                     Contact Information
                 </h2>
                 <div class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-bold text-gray-700 mb-1">Full Name</label>
-                        <input type="text" id="custName" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:border-[#ea580c] bg-gray-50 focus:bg-white transition" placeholder="first name">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 mb-1">First Name</label>
+                            <input type="text" id="custFirstName" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:border-[#ea580c] bg-gray-50 focus:bg-white transition" placeholder="First name">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 mb-1">Last Name</label>
+                            <input type="text" id="custLastName" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:border-[#ea580c] bg-gray-50 focus:bg-white transition" placeholder="Last name">
+                        </div>
                     </div>
                     <div>
                         <label class="block text-sm font-bold text-gray-700 mb-1">Phone Number</label>
                         <input type="tel" id="custPhone" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:border-[#ea580c] bg-gray-50 focus:bg-white transition" placeholder="07...">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">Email</label>
+                        <input type="email" id="custEmail" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:border-[#ea580c] bg-gray-50 focus:bg-white transition" placeholder="your@email.com">
                     </div>
                 </div>
             </section>
@@ -140,9 +189,30 @@
                     <span class="step-number w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold">2</span>
                     Shipping Information
                 </h2>
-                <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-1">Delivery Location / Landmark</label>
-                    <input type="text" id="custLocation" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:border-[#ea580c] bg-gray-50 focus:bg-white transition" placeholder="e.g., Juja City Mall, Kiambu">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">Country</label>
+                        <select id="custCountry" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:border-[#ea580c] bg-gray-50 focus:bg-white transition">
+                            <option value="Kenya" selected>Kenya</option>
+                            <option value="Tanzania">Tanzania</option>
+                            <option value="Uganda">Uganda</option>
+                            <option value="Rwanda">Rwanda</option>
+                            <option value="Burundi">Burundi</option>
+                            <option value="South Sudan">South Sudan</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">City</label>
+                        <input type="text" id="custCity" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:border-[#ea580c] bg-gray-50 focus:bg-white transition" placeholder="e.g., Nairobi">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">Estate / Area</label>
+                        <input type="text" id="custEstate" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:border-[#ea580c] bg-gray-50 focus:bg-white transition" placeholder="e.g., Westlands">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">Delivery Location / Landmark</label>
+                        <input type="text" id="custLocation" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:border-[#ea580c] bg-gray-50 focus:bg-white transition" placeholder="e.g., Juja City Mall, Kiambu">
+                    </div>
                 </div>
             </section>
 
@@ -161,28 +231,20 @@
                         <div class="mt-2 font-bold text-[#ea580c] text-sm">Free</div>
                     </button>
 
-                    <button onclick="selectDelivery(250, 'Rider Delivery', this)" class="delivery-option p-3 border-2 border-gray-100 rounded-xl text-left hover:border-gray-300 transition group flex flex-col justify-between h-full">
+                    <button onclick="selectDelivery(300, 'Rider Delivery', this)" class="delivery-option p-3 border-2 border-gray-100 rounded-xl text-left hover:border-gray-300 transition group flex flex-col justify-between h-full">
                         <div>
                             <div class="font-bold text-sm text-gray-800">Rider</div>
                             <div class="text-xs text-gray-500 mt-1">Nairobi Environs</div>
                         </div>
-                        <div class="mt-2 font-bold text-[#ea580c] text-sm">Ksh 250</div>
+                        <div class="mt-2 font-bold text-[#ea580c] text-sm">Ksh 300</div>
                     </button>
 
-                    <button onclick="selectDelivery(500, 'Door Step', this)" class="delivery-option p-3 border-2 border-gray-100 rounded-xl text-left hover:border-gray-300 transition group flex flex-col justify-between h-full">
-                        <div>
-                            <div class="font-bold text-sm text-gray-800">Door Step</div>
-                            <div class="text-xs text-gray-500 mt-1">Home/Office</div>
-                        </div>
-                        <div class="mt-2 font-bold text-[#ea580c] text-sm">Ksh 500</div>
-                    </button>
-
-                    <button onclick="selectDelivery(300, 'Outside Nairobi', this)" class="delivery-option p-3 border-2 border-gray-100 rounded-xl text-left hover:border-gray-300 transition group flex flex-col justify-between h-full">
+                    <button onclick="selectDelivery(400, 'Outside Nairobi', this)" class="delivery-option p-3 border-2 border-gray-100 rounded-xl text-left hover:border-gray-300 transition group flex flex-col justify-between h-full">
                         <div>
                             <div class="font-bold text-sm text-gray-800">Out of Nairobi</div>
                             <div class="text-xs text-gray-500 mt-1">Courier/Parcel</div>
                         </div>
-                        <div class="mt-2 font-bold text-[#ea580c] text-sm">Ksh 300</div>
+                        <div class="mt-2 font-bold text-[#ea580c] text-sm">Ksh 400</div>
                     </button>
 
                 </div>
@@ -214,7 +276,7 @@
                 </div>
                 
                 <div class="space-y-4">
-                    <button onclick="processPayment()" class="w-full py-4 bg-[#ea580c] hover:bg-orange-700 text-white rounded-xl font-bold shadow-md transition flex items-center justify-center gap-2 group">
+                    <button onclick="processPayment()" class="w-full py-4 bg-[#ea580c] hover:bg-orange-700 text-white rounded-xl font-bold shadow-md transition flex items-center justify-center gap-2 group hidden">
                         <span>Continue to Payment</span>
                         <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
                     </button>
@@ -238,7 +300,7 @@
                         <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-400 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
                     </summary>
                     <div class="px-3 pb-3 text-gray-500 text-xs leading-relaxed border-t mt-2 pt-2">
-                        Orders within Nairobi are delivered via riders or door-step delivery services typically within 24 hours. Orders outside Nairobi are dispatched via trusted courier partners (Wells Fargo, G4S, or PSV parcels). Pickup options available at CBD.
+                        Orders within Nairobi are delivered via riders typically within 24 hours. Orders outside Nairobi are dispatched via trusted courier partners (Wells Fargo, G4S, or PSV parcels). Pickup options available at CBD.
                     </div>
                 </details>
 
@@ -264,14 +326,24 @@
         <p class="text-gray-500 mb-6 text-sm">Enter your details to speed up checkout.</p>
         
         <div class="space-y-4 text-left">
-            <div>
-                <label class="block text-sm font-bold text-gray-700 ml-1 mb-1">Name</label>
-                <input type="text" id="modalName" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:border-[#ea580c] focus:outline-none transition" placeholder="Your Name">
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 ml-1 mb-1">First Name</label>
+                    <input type="text" id="modalFirstName" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:border-[#ea580c] focus:outline-none transition" placeholder="First name">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 ml-1 mb-1">Last Name</label>
+                    <input type="text" id="modalLastName" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:border-[#ea580c] focus:outline-none transition" placeholder="Last name">
+                </div>
             </div>
             <div>
                 <label class="block text-sm font-bold text-gray-700 ml-1 mb-1">Phone Number</label>
                 <input type="tel" id="modalPhone" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:border-[#ea580c] focus:outline-none transition" placeholder="07...">
                 <p class="text-xs text-gray-400 mt-1 ml-1">We'll use this for order updates.</p>
+            </div>
+            <div>
+                <label class="block text-sm font-bold text-gray-700 ml-1 mb-1">Email</label>
+                <input type="email" id="modalEmail" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:border-[#ea580c] focus:outline-none transition" placeholder="your@email.com">
             </div>
         </div>
 
@@ -395,20 +467,30 @@ const savedUser = JSON.parse(localStorage.getItem(userKey));
 if (!savedUser) {
     authModal.classList.remove('hidden');
 } else {
-    document.getElementById('custName').value = savedUser.name || '';
+    document.getElementById('custFirstName').value = savedUser.firstName || '';
+    document.getElementById('custLastName').value = savedUser.lastName || '';
     document.getElementById('custPhone').value = savedUser.phone || '';
+    document.getElementById('custEmail').value = savedUser.email || '';
 }
 
 function handleLogin() {
-    const name = document.getElementById('modalName').value.trim();
+    const firstName = document.getElementById('modalFirstName').value.trim();
+    const lastName = document.getElementById('modalLastName').value.trim();
     const phone = document.getElementById('modalPhone').value.trim();
+    const email = document.getElementById('modalEmail').value.trim();
 
-    if (!name || !phone) {
-        alert("Please enter both Name and Phone Number.");
+    if (!firstName || !lastName || !phone || !email) {
+        alert("Please enter First Name, Last Name, Phone Number, and Email.");
         return;
     }
 
-    const user = { name, phone };
+    // Email validation
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        alert("Please enter a valid email address.");
+        return;
+    }
+
+    const user = { firstName, lastName, name: `${firstName} ${lastName}`, phone, email };
     localStorage.setItem(userKey, JSON.stringify(user));
 
     try {
@@ -421,8 +503,10 @@ function handleLogin() {
         }
     } catch(e) {}
 
-    document.getElementById('custName').value = name;
+    document.getElementById('custFirstName').value = firstName;
+    document.getElementById('custLastName').value = lastName;
     document.getElementById('custPhone').value = phone;
+    document.getElementById('custEmail').value = email;
     authModal.classList.add('hidden');
 }
 
@@ -456,7 +540,6 @@ function renderCheckoutItems() {
         row.innerHTML = `
             <div class="relative w-20 h-20 border border-gray-200 rounded-lg bg-white flex-shrink-0 overflow-hidden">
                 <img src="${item.image_url}" class="w-full h-full object-contain" alt="${item.title}">
-                <span class="absolute top-0 right-0 bg-[#ea580c] text-white text-[10px] font-bold px-1.5 py-0.5 rounded-bl">x${qty}</span>
             </div>
             <div class="flex-1 min-w-0 flex flex-col justify-between h-20 py-1">
                 <p class="text-sm font-bold text-gray-800 line-clamp-2 leading-tight">${item.title}</p>
@@ -465,8 +548,17 @@ function renderCheckoutItems() {
                     <span class="font-bold text-[#ea580c] text-sm">Ksh ${price.toLocaleString()}</span>
                 </div>
             </div>
-            <div class="font-bold text-sm text-gray-800 self-end">
-                Ksh ${(price * qty).toLocaleString()}
+            <div class="flex flex-col items-end gap-2">
+                <button onclick="removeItem(${cart.indexOf(item)})" class="text-orange-500 hover:text-orange-700 transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                </button>
+                <div class="flex items-center gap-2">
+                    <button onclick="changeQuantity(${cart.indexOf(item)}, -1)" class="w-6 h-6 bg-gray-200 hover:bg-gray-300 rounded-full flex items-center justify-center text-sm font-bold">-</button>
+                    <span class="text-sm font-bold min-w-[20px] text-center">${qty}</span>
+                    <button onclick="changeQuantity(${cart.indexOf(item)}, 1)" class="w-6 h-6 bg-gray-200 hover:bg-gray-300 rounded-full flex items-center justify-center text-sm font-bold">+</button>
+                </div>
             </div>
         `;
         container.appendChild(row);
@@ -480,6 +572,54 @@ function renderCheckoutItems() {
     }
     
     updateTotal(subtotal);
+
+    // Track InitiateCheckout Event for Meta Pixel
+    const total = subtotal + shippingCost;
+    fbq('track', 'InitiateCheckout', {content_ids: cart.map(item => item.id), value: total, currency: 'KES'});
+}
+
+// ==========================
+// 3.5 QUANTITY AND REMOVE FUNCTIONS
+// ==========================
+function changeQuantity(index, delta) {
+    if (cart[index]) {
+        cart[index].qty = Math.max(1, (cart[index].qty || 1) + delta);
+        localStorage.setItem('cart', JSON.stringify(cart));
+        renderCheckoutItems();
+        
+        try {
+            if (checkoutSessionId) {
+                const sessions = JSON.parse(localStorage.getItem('checkout_sessions') || '{}');
+                sessions[checkoutSessionId] = sessions[checkoutSessionId] || {};
+                sessions[checkoutSessionId].cart = cart;
+                sessions[checkoutSessionId].updatedAt = Date.now();
+                localStorage.setItem('checkout_sessions', JSON.stringify(sessions));
+            }
+        } catch(e) {}
+    }
+}
+
+function removeItem(index) {
+    if (cart[index]) {
+        cart.splice(index, 1);
+        localStorage.setItem('cart', JSON.stringify(cart));
+        renderCheckoutItems();
+        
+        if (cart.length === 0) {
+            alert("Your cart is empty. Redirecting to shop.");
+            window.location.href = 'shop.html';
+        }
+        
+        try {
+            if (checkoutSessionId) {
+                const sessions = JSON.parse(localStorage.getItem('checkout_sessions') || '{}');
+                sessions[checkoutSessionId] = sessions[checkoutSessionId] || {};
+                sessions[checkoutSessionId].cart = cart;
+                sessions[checkoutSessionId].updatedAt = Date.now();
+                localStorage.setItem('checkout_sessions', JSON.stringify(sessions));
+            }
+        } catch(e) {}
+    }
 }
 
 // ==========================
@@ -523,19 +663,32 @@ renderCheckoutItems();
 // 5. ACTION BUTTONS LOGIC
 // ==========================
 function validateForm() {
-    const name = document.getElementById('custName').value.trim();
+    const firstName = document.getElementById('custFirstName').value.trim();
+    const lastName = document.getElementById('custLastName').value.trim();
     const phone = document.getElementById('custPhone').value.trim();
+    const email = document.getElementById('custEmail').value.trim();
+    const country = document.getElementById('custCountry').value.trim();
+    const city = document.getElementById('custCity').value.trim();
+    const estate = document.getElementById('custEstate').value.trim();
     const loc = document.getElementById('custLocation').value.trim();
 
-    if (!name || !phone || !loc) {
-        alert("Please fill in Name, Phone, and Delivery Location.");
+    if (!firstName || !lastName || !phone || !email || !country || !city || !estate || !loc) {
+        alert("Please fill in all required fields: First Name, Last Name, Phone, Email, Country, City, Estate/Area, and Delivery Location.");
         return false;
     }
+    
+    // Email validation
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        alert("Please enter a valid email address.");
+        return false;
+    }
+    
     if (!shippingMethod) {
         alert("Please select a Delivery Method.");
         return false;
     }
-    return { name, phone, loc };
+    
+    return { firstName, lastName, name: `${firstName} ${lastName}`, phone, email, country, city, estate, loc };
 }
 
 async function processWhatsAppCheckout() {
@@ -550,7 +703,7 @@ async function processWhatsAppCheckout() {
         if (checkoutSessionId) {
             const sessions = JSON.parse(localStorage.getItem('checkout_sessions') || '{}');
             sessions[checkoutSessionId] = sessions[checkoutSessionId] || {};
-            sessions[checkoutSessionId].user = { name: data.name, phone: data.phone };
+            sessions[checkoutSessionId].user = { name: data.name, phone: data.phone, email: data.email };
             sessions[checkoutSessionId].location = data.loc;
             sessions[checkoutSessionId].shippingCost = shippingCost;
             sessions[checkoutSessionId].shippingMethod = shippingMethod;
@@ -566,8 +719,37 @@ async function processWhatsAppCheckout() {
         console.error('Failed to save order to DB:', e);
     }
 
-    // 3. Simplified Professional WhatsApp Message
-    const msg = `Hello Sharkim Traders, I want to proceed with my order. \n\n*Order Number: ${orderRef}*`;
+    // 3. Build Comprehensive WhatsApp Message with Order Details
+    const totalStr = document.getElementById('summaryTotal').innerText;
+    const grandTotal = parseFloat(totalStr.replace(/[^\d.]/g, ''));
+    
+    // Build a natural, customer-style message without emojis
+    const subtotal = cart.reduce((sum, item) => sum + (item.price * (item.qty || 1)), 0);
+    let msg = `Hello,\n\n`;
+    msg += `I would like to place the following order.\n\n`;
+    msg += `Order number: ${orderRef}\n`;
+    msg += `Name: ${data.name}\n`;
+    msg += `Phone: ${data.phone}\n`;
+    if (data.email) msg += `Email: ${data.email}\n`;
+    msg += `\n`;
+
+    msg += `Items:\n`;
+    cart.forEach((item, idx) => {
+        msg += `${idx + 1}) ${item.title}\n`;
+        msg += `   Qty: ${item.qty || 1}\n`;
+        msg += `   Price: Ksh ${item.price.toLocaleString()}\n\n`;
+    });
+
+    msg += `Order summary:\n`;
+    msg += `Subtotal: Ksh ${subtotal.toLocaleString()}\n`;
+    msg += `Shipping (${shippingMethod}): Ksh ${shippingCost}\n`;
+    msg += `Total: Ksh ${grandTotal.toLocaleString()}\n\n`;
+
+    msg += `Delivery method: ${shippingMethod}\n`;
+    msg += `Delivery location: ${data.loc}\n\n`;
+
+    msg += `Please confirm this order and let me know the payment instructions.\n\n`;
+    msg += `Thank you.`;
     
     const encodedMsg = encodeURIComponent(msg);
     const phoneNumber = "254704843554"; 
@@ -578,12 +760,8 @@ async function processWhatsAppCheckout() {
     // Clear cart locally as the order is now successfully logged
     localStorage.removeItem('cart');
 
-    if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-         window.location.href = appLink;
-         setTimeout(() => { window.location.href = webLink; }, 2000);
-    } else {
-         window.open(webLink, '_blank');
-    }
+    // Track conversion with Google Ads
+    gtag_report_conversion(webLink, grandTotal, orderRef);
 }
 // ================= ORDER SAVING LOGIC =================
 
@@ -618,6 +796,10 @@ async function saveOrderToDb(data, method, orderRef) {
         .upsert({
             phone: cleanPhone,
             name: data.name,
+            email: data.email,
+            country: data.country,
+            city: data.city,
+            estate: data.estate,
             location: data.loc,
             last_order_at: new Date().toISOString()
         }, { onConflict: 'phone' })
@@ -634,6 +816,10 @@ async function saveOrderToDb(data, method, orderRef) {
         customer_id: customerData ? customerData.id : null, // Links to customer table ID
         customer_name: data.name,
         customer_phone: cleanPhone,
+        customer_email: data.email,
+        customer_country: data.country,
+        customer_city: data.city,
+        customer_estate: data.estate,
         customer_location: data.loc, // Column from your schema
         delivery_location: data.loc, // Column from your schema
         items: cart,
@@ -700,17 +886,70 @@ function switchMethod(method) {
 function handlePaid() {
 
     const total = document.getElementById('modalTotalAmount').innerText;
+    const numericTotal = parseFloat(String(total).replace(/[^0-9.\-]+/g, '')) || 0;
     
     const businessPhone = "254704843554"; 
     
-    const message = `Hello Sharkim Traders, I have just made a payment of Ksh ${total} for my order. Please verify and process it.`;
+    // Get customer info from form
+    const firstName = document.getElementById('custFirstName').value || '';
+    const lastName = document.getElementById('custLastName').value || '';
+    const custName = firstName && lastName ? `${firstName} ${lastName}` : 'Customer';
+    const custPhone = document.getElementById('custPhone').value || 'N/A';
+    const custEmail = document.getElementById('custEmail').value || '';
+    const custCountry = document.getElementById('custCountry').value || 'N/A';
+    const custCity = document.getElementById('custCity').value || 'N/A';
+    const custEstate = document.getElementById('custEstate').value || 'N/A';
+    const custLocation = document.getElementById('custLocation').value || 'N/A';
     
-    localStorage.removeItem('cart');
+    // Build a natural payment confirmation message like a customer would send
+    const subtotal = cart.reduce((sum, item) => sum + (item.price * (item.qty || 1)), 0);
+    let message = `Hello,\n\n`;
+    message += `I have just made a payment for my order.\n\n`;
+    message += `Name: ${custName}\n`;
+    message += `Phone: ${custPhone}\n`;
+    if (custEmail) message += `Email: ${custEmail}\n`;
+    message += `\n`;
+
+    message += `Items:\n`;
+    cart.forEach((item, idx) => {
+        message += `${idx + 1}) ${item.title}\n`;
+        message += `   Qty: ${item.qty || 1}\n`;
+        message += `   Price: Ksh ${item.price.toLocaleString()}\n\n`;
+    });
+
+    message += `Payment details:\n`;
+    message += `Subtotal: Ksh ${subtotal.toLocaleString()}\n`;
+    message += `Shipping (${shippingMethod}): Ksh ${shippingCost}\n`;
+    message += `Total paid: Ksh ${numericTotal.toLocaleString()}\n\n`;
+
+    message += `Shipping Information:\n`;
+    message += `Country: ${custCountry}\n`;
+    message += `City: ${custCity}\n`;
+    message += `Estate/Area: ${custEstate}\n`;
+    message += `Delivery method: ${shippingMethod}\n`;
+    message += `Delivery location: ${custLocation}\n\n`;
+
+    message += `Please confirm receipt of payment and advise next steps.\n\n`;
+    message += `Thank you.`;
     
+    // Track Purchase event with Meta Pixel
+    try {
+        const content_ids = (cart || []).map(i => i.id);
+        if (window.fbq) {
+            fbq('track', 'Purchase', { value: numericTotal, currency: 'KES', content_ids: content_ids });
+        }
+    } catch (e) {
+        console.warn('Purchase tracking failed', e);
+    }
+
     const whatsappUrl = `https://wa.me/${businessPhone}?text=${encodeURIComponent(message)}`;
     alert("Opening WhatsApp to send your payment confirmation...");
-    
-    window.location.href = whatsappUrl;
+
+    // Delay clearing cart and redirect to allow the pixel to send
+    setTimeout(() => {
+        localStorage.removeItem('cart');
+        window.location.href = whatsappUrl;
+    }, 350);
 }
 
 </script>

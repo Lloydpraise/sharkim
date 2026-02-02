@@ -88,7 +88,18 @@ function ensureCartDrawer() {
     backdrop.onclick = closeCart;
     document.getElementById('cartClose').onclick = closeCart;
     document.getElementById('proceedCheckoutBtn').onclick = () => {
-        window.location.href = 'checkout.html';
+        // Track InitiateCheckout with Meta Pixel before navigating
+        try {
+            const content_ids = cart.map(i => i.id);
+            const value = cart.reduce((s, it) => s + ((Number(it.price) || 0) * (it.qty || 1)), 0);
+            if (window.fbq) {
+                fbq('track', 'InitiateCheckout', { content_ids: content_ids, value: value, currency: 'KES' });
+            }
+        } catch (e) {
+            console.warn('InitiateCheckout tracking failed', e);
+        }
+        // Delay navigation slightly to give the pixel time to send
+        setTimeout(() => { window.location.href = 'checkout.html'; }, 350);
     };
 }
 
@@ -239,6 +250,8 @@ async function silentAddToCart(id) {
             cart.push({ ...p, qty: 1 });
         }
         logEvent('add_to_cart', {}, id);
+        // Track AddToCart Event for Meta Pixel
+        fbq('track', 'AddToCart', {content_ids: [id], content_name: p.title, value: p.price, currency: 'KES'});
         saveCart();
         updateCartCount();
         renderCart();
@@ -265,13 +278,15 @@ window.addToCart = async (id) => {
 // Buy Now
 window.buyNow = async (id) => {
     await window.addToCart(id);
-    window.location.href = 'checkout.html';
+    // Delay navigation to allow AddToCart pixel to send
+    setTimeout(() => { window.location.href = 'checkout.html'; }, 350);
 };
 
 // Buy Now Silent
 window.buyNowSilent = async (id) => {
     await silentAddToCart(id);
-    window.location.href = 'checkout.html';
+    // Delay navigation to allow AddToCart pixel to send
+    setTimeout(() => { window.location.href = 'checkout.html'; }, 350);
 };
 
 // Initialize on load

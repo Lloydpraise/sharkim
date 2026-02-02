@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Sharkim Ads Optimizer</title>
+  <style>
+    body { font-family: sans-serif; padding: 40px; max-width: 600px; margin: 0 auto; background: #f4f4f4; }
+    .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    input { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+    button { width: 100%; padding: 15px; background: #00C853; color: white; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; }
+    button:disabled { background: #ccc; }
+    .status { margin-top: 20px; font-weight: bold; }
+    .progress-bar { width: 100%; height: 20px; background: #eee; border-radius: 10px; margin-top: 20px; overflow: hidden; }
+    .progress-fill { height: 100%; background: #2196F3; width: 0%; transition: width 0.5s; }
+    .log { height: 200px; overflow-y: scroll; background: #333; color: #0f0; padding: 10px; font-family: monospace; margin-top: 20px; border-radius: 4px; }
+  </style>
+</head>
+<body>
+
+<div class="card">
+  <h2>🚀 Ads Feed Optimizer</h2>
+  <p>This tool will process your catalog in safe batches to prevent server timeouts.</p>
+  
+  <label>Supabase URL</label>
+  <input type="text" id="url" placeholder="https://xyz.supabase.co">
+  
+  <label>Supabase Anon Key</label>
+  <input type="password" id="key" placeholder="eyJhbGciOiJIUzI1...">
+
+  <button onclick="startLoop()" id="btn">START OPTIMIZATION</button>
+
+  <div class="progress-bar">
+    <div class="progress-fill" id="fill"></div>
+  </div>
+  <div class="status" id="status">Ready to start...</div>
+  
+  <div class="log" id="log"></div>
+</div>
+
+<script>
+  async function startLoop() {
+    const url = document.getElementById('url').value + '/functions/v1/optimize-ads-feed';
+    const key = document.getElementById('key').value;
+    const btn = document.getElementById('btn');
+    const status = document.getElementById('status');
+    const logDiv = document.getElementById('log');
+    const fill = document.getElementById('fill');
+    
+    if(!url || !key) return alert("Please enter URL and Key");
+
+    btn.disabled = true;
+    let keepGoing = true;
+    let totalProcessed = 0;
+
+    log("Starting optimization loop...");
+
+    while (keepGoing) {
+      try {
+        status.innerText = "Processing batch of 5...";
+        
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 
+            'Authorization': 'Bearer ' + key,
+            'Content-Type': 'application/json' 
+          }
+        });
+
+        if (!res.ok) throw new Error("Server error: " + res.statusText);
+
+        const data = await res.json();
+        
+        // Update Logs
+        if (data.processed > 0) {
+          data.details.forEach(p => log(`✔ Processed: ${p.id} (${p.status})`));
+          totalProcessed += data.processed;
+        }
+
+        // Update Progress UI
+        const remaining = data.remaining;
+        const totalEstimated = totalProcessed + remaining;
+        const percent = totalEstimated > 0 ? ((totalProcessed / totalEstimated) * 100).toFixed(1) : 100;
+        
+        fill.style.width = percent + "%";
+        status.innerText = `Remaining: ${remaining}`;
+
+        // Check if done
+        if (remaining === 0 || data.processed === 0) {
+          keepGoing = false;
+          status.innerText = "🎉 COMPLETED! All products optimized.";
+          log("Done!");
+          btn.disabled = false;
+        } else {
+          // SAFETY BREAK: Wait 1 second before next batch
+          log("Waiting 1s cooldown...");
+          await new Promise(r => setTimeout(r, 1000));
+        }
+
+      } catch (e) {
+        log("❌ Error: " + e.message);
+        status.innerText = "Paused due to error. Check console.";
+        keepGoing = false; // Stop on error so user can fix
+        btn.disabled = false;
+      }
+    }
+  }
+
+  function log(msg) {
+    const logDiv = document.getElementById('log');
+    logDiv.innerHTML += `<div>[${new Date().toLocaleTimeString()}] ${msg}</div>`;
+    logDiv.scrollTop = logDiv.scrollHeight;
+  }
+</script>
+
+</body>
+</html>

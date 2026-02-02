@@ -1,23 +1,33 @@
-# Task: Update Buy Buttons to Add to Cart and Load Checkout
+# Meta Pixel Installation and Event Tracking Plan
 
-## Completed Tasks
-- [x] Modified js/cart.js: Added silentAddToCart function and buyNowSilent function
-- [x] Modified index.js: Changed BUY NOW button in renderCard to use buyNowSilent
-- [x] Modified shop.html: Changed BUY NOW button in renderProductCard to use buyNowSilent
-- [x] Modified product.html: Added onclick="buyNowSilent('${p.id}')" to btnBuyDesktop and btnBuyMobile
+## Overview
+Install Meta Pixel on all pages (index, product, shop, checkout) and set up event tracking for major e-commerce events to enhance Facebook advertising and analytics.
 
-## Summary
-All buy buttons now add the product to cart silently (without showing the "✔ Added" toast) and then redirect to checkout.html, where the cart items are loaded from localStorage.
+## Tasks
 
-The behavior is consistent across index.js, shop.html, and product.html pages.
+### 1. Install Meta Pixel Base Code
+- [x] Add Meta Pixel code to index.html (after Google Analytics)
+- [x] Add Meta Pixel code to product.html (after Google Analytics)
+- [x] Add Meta Pixel code to shop.html (after Google Analytics)
+- [ ] Add Meta Pixel code to checkout.html (after Google Analytics)
 
----
+### 2. Set Up Event Tracking
+- [x] ViewContent event on product.html (when product loads)
+- [ ] Search event on shop.html (when AI search is performed)
+- [ ] AddToCart event in js/cart.js (when item added to cart)
+- [ ] InitiateCheckout event on checkout.html (when checkout page loads)
 
-# Task: Autopopulate Product Edit and Inventory Manage Modals from Local Storage
+### 3. Testing
+- [ ] Test pixel installation on all pages
+- [ ] Test event firing in Meta Pixel Helper or Facebook Events Manager
+- [ ] Verify no console errors
 
-## Completed Tasks
-- [x] Modified admin.js: Made editProduct async and ensure products are loaded from local before opening modal
-- [x] Modified admin.js: Updated handleSaveProduct to update allProducts locally, update cache, and re-render immediately after saving to DB
+## Meta Pixel ID
+1815039102579831
 
-## Summary
-Edit product and inventory manage buttons now autopopulate the modal with product data loaded from local storage first. After editing and saving, changes are saved to Supabase DB and immediately updated in local storage and UI, ensuring fast and consistent data loading.
+## Events to Track
+- PageView (automatic on all pages)
+- ViewContent (product pages)
+- Search (shop page searches)
+- AddToCart (cart additions)
+- InitiateCheckout (checkout page load)

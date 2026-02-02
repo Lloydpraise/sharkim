@@ -10,6 +10,23 @@
 
   gtag('config', 'AW-17577238441');
 </script>
+<!-- Meta Pixel Code -->
+<script>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '1815039102579831');
+fbq('track', 'PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=1815039102579831&ev=PageView&noscript=1"
+/></noscript>
+<!-- End Meta Pixel Code -->
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" type="image/png" href="images/icon%20logo.png">
@@ -460,6 +477,11 @@
     <div class="absolute inset-0 bg-black bg-opacity-70 backdrop-blur-sm"></div>
     <div class="bg-white w-11/12 max-w-md p-8 rounded-2xl shadow-2xl relative z-10 text-center">
 
+      <!-- Dismiss permanently (top-right) -->
+      <button onclick="dismissExitModalForever()" aria-label="Close" class="absolute top-3 right-3 text-gray-600 hover:text-gray-800">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+      </button>
+
         <h2 class="text-2xl font-bold text-gray-800 mb-2">Don't Miss Out</h2>
         <p class="text-gray-500 mb-6 text-sm">Get up to <span class="text-[#ea580c] font-bold">30%</span> Exclusive Discounts on Selected Products if you join Our WhatsApp Community! Fill below and we will contact you soon on how to join!.</p>
 
@@ -488,11 +510,34 @@
 <!-- Sticky Exit Intent Button -->
 <div id="exitIntentButton" class="fixed bottom-4 left-4 z-40">
     <div onclick="showExitModal()" class="bg-[#ea580c] text-white rounded-full shadow-lg flex items-center px-4 py-2 hover:bg-orange-700 transition cursor-pointer">
-        <button onclick="closeExitIntentButton(); event.stopPropagation();" class="text-white hover:text-gray-200 mr-2">
+    <button onclick="dismissExitModalForever(); event.stopPropagation();" class="text-white hover:text-gray-200 mr-2" aria-label="Dismiss permanently">
             <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
         </button>
         <span class="text-sm font-bold">Don't Miss Out</span>
     </div>
 </div>
+
+<!-- Floating WhatsApp Button -->
+<a id="whatsappBtn" href="javascript:void(0);" onclick="openWhatsApp()" class="fixed bottom-6 right-6 z-50 w-16 h-16 bg-[#25D366] hover:bg-[#1fbb57] text-white rounded-full shadow-lg flex items-center justify-center transition-all transform hover:scale-110 hover:shadow-xl" title="Chat with us on WhatsApp" aria-label="Open WhatsApp">
+    <img src="images/whatsapp.svg" alt="WhatsApp" class="w-8 h-8" />
+</a>
+
+<script>
+function openWhatsApp() {
+    const phoneNumber = "254704843554";
+    const message = "Hello! I'm interested in your products.";
+    const encodedMsg = encodeURIComponent(message);
+    
+    const appLink = `whatsapp://send?phone=${phoneNumber}&text=${encodedMsg}`;
+    const webLink = `https://wa.me/${phoneNumber}?text=${encodedMsg}`;
+    
+    if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+        window.location.href = appLink;
+        setTimeout(() => { window.location.href = webLink; }, 2000);
+    } else {
+        window.open(webLink, '_blank');
+    }
+}
+</script>
 </body>
 </html>

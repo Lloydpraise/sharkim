@@ -10,6 +10,23 @@
 
   gtag('config', 'AW-17577238441');
 </script>
+<!-- Meta Pixel Code -->
+<script>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '1815039102579831');
+fbq('track', 'PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=1815039102579831&ev=PageView&noscript=1"
+/></noscript>
+<!-- End Meta Pixel Code -->
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" type="image/png" href="images/icon%20logo.png">
@@ -387,21 +404,99 @@ async function initSession() {
     const now = new Date();
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ? 'Mobile' : 'Desktop';
 
-    if (!currentSessionId) {
-        const { data, error } = await client.from('site_sessions')
-            .insert([{ device_type: isMobile }])
-            .select()
-            .single();
-        
-        if (data) {
-            currentSessionId = data.session_id;
+    try {
+        if (!currentSessionId) {
+            const { data, error } = await client.from('site_sessions')
+                .insert([{ device_type: isMobile }])
+                .select()
+                .single();
+
+            if (error) {
+                console.warn('initSession: supabase insert failed', error);
+                // If server rejects (401/unauthorized) fall back to a local session id
+                currentSessionId = 'local-' + Date.now();
+                localStorage.setItem('site_session_id', currentSessionId);
+                return;
+            }
+
+            if (data) {
+                currentSessionId = data.session_id;
+                localStorage.setItem('site_session_id', currentSessionId);
+            }
+        } else {
+            const { error } = await client.from('site_sessions')
+                .update({ last_active_at: now })
+                .eq('session_id', currentSessionId);
+            if (error) console.warn('initSession update failed', error);
+        }
+    } catch (e) {
+        console.warn('initSession unexpected error', e);
+        // fallback to local session id so analytics calls don't block
+        if (!currentSessionId) {
+            currentSessionId = 'local-' + Date.now();
             localStorage.setItem('site_session_id', currentSessionId);
         }
-    } else {
-        await client.from('site_sessions')
-            .update({ last_active_at: now })
-            .eq('session_id', currentSessionId);
     }
+}
+
+// When an image fails to load on the public site, try fetching the authoritative
+// image URL from Supabase (products table) and update the DOM + local cache.
+async function repairProductImage(productId, imgEl){
+    try {
+        if (!productId || !imgEl) return;
+        if (imgEl.__repair_attempt) return; // avoid loops
+        imgEl.__repair_attempt = true;
+
+        const { data, error } = await client.from('products').select('id, image_url, images').eq('id', productId).limit(1).single();
+        if (error || !data) {
+            console.warn('repairProductImage: failed to fetch product', productId, error);
+            imgEl.src = 'images/sharkim_gold_logo.png';
+            return;
+        }
+
+        const newUrl = (data.images && data.images.length) ? data.images[0] : data.image_url;
+        if (!newUrl) { imgEl.src = 'images/sharkim_gold_logo.png'; return; }
+
+        // only attempt network sources
+        const low = (''+newUrl).toLowerCase();
+        if (low.startsWith('blob:') || low.startsWith('data:') || low.startsWith('file:')) {
+            imgEl.src = 'images/sharkim_gold_logo.png';
+            return;
+        }
+
+        // Update DOM
+        imgEl.src = newUrl;
+
+        // Update productMetadata cache if present
+        try {
+            const cached = localStorage.getItem('productMetadata');
+            if (cached) {
+                const arr = JSON.parse(cached || '[]');
+                let changed = false;
+                for (let i=0;i<arr.length;i++){
+                    if (String(arr[i].id) === String(productId)){
+                        arr[i].image_url = newUrl;
+                        changed = true; break;
+                    }
+                }
+                if (changed) localStorage.setItem('productMetadata', JSON.stringify(arr));
+            }
+        } catch(e){}
+    } catch(e) {
+        console.warn('repairProductImage unexpected', e);
+        try{ imgEl.src = 'images/sharkim_gold_logo.png'; }catch(e){}
+    }
+}
+
+function handleMissingImage(img, productId){
+    try{
+        if (!img || img.__missing_handled) return;
+        img.__missing_handled = true;
+        // immediate placeholder while we repair
+        img.src = 'images/sharkim_gold_logo.png';
+        // attempt asynchronous repair
+        setTimeout(()=> repairProductImage(productId, img), 50);
+    }catch(e){}
 }
 
 // 2. Generic Event Logger
@@ -669,9 +764,8 @@ function renderSubCategoryCards() {
     });
 }
 
-// =====================
 // SIDEBAR FILTERS
-// =====================
+
 function setupPriceRangeLimits() {
     if(categoryProducts.length === 0) return;
     const prices = categoryProducts.map(p => Number(p.price) || 0);
@@ -825,7 +919,7 @@ function renderProductCard(product) {
 
   el.innerHTML = `
     <a href="product.html?id=${encodeURIComponent(product.id)}" class="block mb-3 relative aspect-[4/5] overflow-hidden rounded-lg flex items-center justify-center p-2 bg-white">
-      <img src="${product.image_url}" class="w-full h-full object-contain hover:scale-105 transition duration-300" loading="lazy" alt="${product.title}">
+    <img src="${product.image_url}" data-product-id="${product.id}" onerror="handleMissingImage(this, '${product.id}')" class="w-full h-full object-contain hover:scale-105 transition duration-300" loading="lazy" alt="${product.title}">
       ${disc ? `<span class="discount-badge absolute top-0 left-0 text-[10px] font-bold">-${disc}%</span>` : ''}
     </a>
 
@@ -930,7 +1024,10 @@ setTimeout(buildMobileMenu, 500);
 
 function handleSearch(id) {
     const val = document.getElementById(id).value.trim();
-    if(val) window.location.href = `shop.html?q=${encodeURIComponent(val)}`;
+    if (val) {
+        try { if (window.fbq) fbq('track', 'Search', { search_string: val }); } catch (e) { console.warn('Search tracking failed', e); }
+        window.location.href = `shop.html?q=${encodeURIComponent(val)}`;
+    }
 }
 document.getElementById('searchBtnDesktop').addEventListener('click', () => handleSearch('searchInputDesktop'));
 document.getElementById('searchBtnMobile').addEventListener('click', () => handleSearch('searchInputMobile'));
@@ -959,6 +1056,9 @@ injectAiUi();
 // 2. The Trigger Function
 async function handleAiSearch(query) {
     if (!query) return;
+
+    // Track Search Event for Meta Pixel
+    fbq('track', 'Search', {search_string: query});
 
     // Ensure UI is ready (Modal/Container)
     const modal = ensureAiUiExists();
@@ -1070,7 +1170,7 @@ function createProductCard(p, isHorizontal = false) {
       <a href="product.html?id=${p.id}" class="block h-full flex flex-col">
         <div class="h-48 p-4 flex items-center justify-center relative">
            ${stockBadge}
-           <img src="${p.image_url || 'placeholder.jpg'}" class="h-full object-contain mx-auto" loading="lazy" alt="${p.title}">
+           <img src="${p.image_url || 'placeholder.jpg'}" data-product-id="${p.id}" onerror="handleMissingImage(this, '${p.id}')" class="h-full object-contain mx-auto" loading="lazy" alt="${p.title}">
         </div>
         <div class="p-4 border-t flex-1 flex flex-col justify-between">
           <div>
@@ -1199,6 +1299,29 @@ function removeLoadingIndicator(id) {
 
 // Init
 init();
+</script>
+
+<!-- Floating WhatsApp Button -->
+<a id="whatsappBtn" href="javascript:void(0);" onclick="openWhatsApp()" class="fixed bottom-6 right-6 z-50 w-16 h-16 bg-[#25D366] hover:bg-[#1fbb57] text-white rounded-full shadow-lg flex items-center justify-center transition-all transform hover:scale-110 hover:shadow-xl" title="Chat with us on WhatsApp" aria-label="Open WhatsApp">
+    <img src="images/whatsapp.svg" alt="WhatsApp" class="w-8 h-8" />
+</a>
+
+<script>
+function openWhatsApp() {
+    const phoneNumber = "254704843554";
+    const message = "Hello! I'm interested in your products.";
+    const encodedMsg = encodeURIComponent(message);
+    
+    const appLink = `whatsapp://send?phone=${phoneNumber}&text=${encodedMsg}`;
+    const webLink = `https://wa.me/${phoneNumber}?text=${encodedMsg}`;
+    
+    if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+        window.location.href = appLink;
+        setTimeout(() => { window.location.href = webLink; }, 2000);
+    } else {
+        window.open(webLink, '_blank');
+    }
+}
 </script>
 </body>
 </html>

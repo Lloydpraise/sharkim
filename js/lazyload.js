@@ -18,11 +18,8 @@
     try {
       const src = img.getAttribute('src') || '';
       if (!src) return;
-      // prefer to load a smaller variant first if available/guessable
-      let small = '';
-      try { small = src.replace(/\.(jpg|jpeg|png)$/i, '-small.$1'); } catch(e){}
+      // keep original src as data-src (do NOT guess '-small' variants — they often 404)
       img.setAttribute('data-src', src);
-      if (small && small !== src) img.dataset.srcsmall = small;
       // set minimal placeholder to avoid large downloads
       img.setAttribute('src', placeholder);
       img.classList.add('lazy-img');
@@ -36,15 +33,15 @@
     if (!src) return;
     const srcSmall = img.dataset.srcsmall;
     img.removeAttribute('data-src');
-    // Try the small image first, then fallback to full-size if it errors
-    if (srcSmall) {
-      img.onerror = function(){
-        try { img.onerror = null; img.src = src; } catch(e){}
-      };
-      img.src = srcSmall;
-    } else {
-      img.src = src;
-    }
+    // Prefer loading full-size first to avoid 404s for non-existent '-small' variants.
+    // If full-size fails and a small variant exists, try it as a fallback.
+    img.onerror = function(){
+      try {
+        img.onerror = null;
+        if (srcSmall) img.src = srcSmall;
+      } catch(e){}
+    };
+    img.src = src;
     img.classList.remove('lazy-img');
     try { img.setAttribute('decoding','async'); } catch(e){}
   }
@@ -62,7 +59,8 @@
 
   function initObserver(){
     if (observer) observer.disconnect();
-    observer = new IntersectionObserver(onIntersect, { root: null, rootMargin: '400px 0px', threshold: 0.01 });
+    // Increase rootMargin to prefetch images earlier (helps when metadata is cached)
+    observer = new IntersectionObserver(onIntersect, { root: null, rootMargin: '1000px 0px', threshold: 0.001 });
   }
 
   function getAllImages(){
@@ -116,6 +114,35 @@
 
     // 2) small delay then load top/above-fold images
     setTimeout(()=> priorityLoad(isTopImage, 30), 60);
+
+    // 3) If there is cached product metadata in localStorage, eagerly load those image URLs
+    try {
+      if (localStorage && localStorage.getItem) {
+        const cached = localStorage.getItem('productMetadata');
+        if (cached) {
+          const meta = JSON.parse(cached || '[]');
+          const urls = new Set((meta || []).map(m => m.image_url).filter(Boolean));
+          if (urls.size) {
+            // load any prepared images whose data-src or original src matches cached urls
+            getAllImages().forEach(img => {
+              try {
+                const dsrc = img.dataset && img.dataset.src ? img.dataset.src : null;
+                const asrc = img.getAttribute && img.getAttribute('src') ? img.getAttribute('src') : null;
+                const candidate = dsrc || asrc;
+                if (!candidate) return;
+                const lower = candidate.toLowerCase();
+                // Skip non-network sources to avoid blocked blob/data/file loads
+                if (lower.startsWith('blob:') || lower.startsWith('data:') || lower.startsWith('file:')) return;
+                if ((dsrc && urls.has(dsrc)) || (asrc && urls.has(asrc)) || urls.has(candidate)) {
+                  loadImageNow(img);
+                  try{ if (observer) observer.unobserve(img); }catch(e){}
+                }
+              } catch(e){}
+            });
+          }
+        }
+      }
+    } catch(e){}
   }
 
   function init(){

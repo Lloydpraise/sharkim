@@ -1,5 +1,3 @@
-
-
 // ================= CONFIGURATION =================
 
 const supabaseUrl = 'https://ljxvxbjhkgoeygpyejkc.supabase.co'; 
@@ -14,6 +12,52 @@ let currentVariations = [];
 const PIN_CODE = "1234"; // Default PIN
 
 // ================= PRODUCT CACHE LOGIC =================
+// Realtime subscription: keep admin product lists in sync without reloads
+function setupRealtimeProducts() {
+    try {
+        // Use Supabase Realtime channel (v2).
+        const channel = client.channel('public:products');
+        channel.on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, (payload) => {
+            const ev = payload.eventType || payload.event || payload.type;
+            const recNew = payload.new || payload.record || payload.new_record;
+            const recOld = payload.old || payload.old_record;
+            console.log('Realtime products event', ev, recNew || recOld);
+
+            try {
+                if (ev === 'INSERT') {
+                    const p = Object.assign({}, recNew, { displayImage: (recNew.images && recNew.images.length) ? recNew.images[0] : (recNew.image_url || 'images/sharkim_gold_logo.png') });
+                    allProducts.unshift(p);
+                } else if (ev === 'UPDATE') {
+                    const idx = allProducts.findIndex(x => String(x.id) === String(recNew.id));
+                    if (idx !== -1) {
+                        allProducts[idx] = Object.assign({}, allProducts[idx], recNew, { displayImage: (recNew.images && recNew.images.length) ? recNew.images[0] : (recNew.image_url || allProducts[idx].displayImage) });
+                    } else {
+                        const p = Object.assign({}, recNew, { displayImage: (recNew.images && recNew.images.length) ? recNew.images[0] : (recNew.image_url || 'images/sharkim_gold_logo.png') });
+                        allProducts.unshift(p);
+                    }
+                } else if (ev === 'DELETE') {
+                    const idToRemove = (recOld && recOld.id) || (recNew && recNew.id);
+                    allProducts = allProducts.filter(x => String(x.id) !== String(idToRemove));
+                }
+
+                // Normalize and re-render
+                allProducts = allProducts.sort((a, b) => a.id - b.id);
+                renderProducts(allProducts);
+                renderInventory(allProducts);
+                updateStats(allProducts);
+                populateCategories(allProducts);
+
+                // Update cache (store lightweight metadata)
+                try {
+                    const cacheProducts = allProducts.map(p => ({ id: p.id, title: p.title, price: p.price, image_url: p.image_url || p.displayImage, main_category: p.main_category }));
+                    localStorage.setItem('productCache', JSON.stringify(cacheProducts));
+                } catch (e) { /* ignore storage errors */ }
+            } catch (e) { console.warn('Realtime handler error', e); }
+        }).subscribe();
+    } catch (err) {
+        console.warn('Realtime setup failed', err);
+    }
+}
 function showGlobalLoading() {
     document.getElementById('loadingOverlay').classList.remove('hidden');
 }
@@ -148,6 +192,8 @@ async function initDashboard() {
     }
     setupEventListeners();
     loadSiteSettings();
+    // Start realtime subscriptions so admin UI updates automatically
+    try { setupRealtimeProducts(); } catch (e) { console.warn('Realtime setup failed:', e); }
 }
 
 async function fetchAllProducts() {
@@ -288,19 +334,44 @@ function renderProducts(products) {
 function buildAlphabetSlider(letters){
     const slider = document.getElementById('alphaSlider');
     if(!slider) return;
+    // Always show A-Z and '#' (numbers) in the scroller.
+    const present = new Set((letters || []).map(l => l === '#' ? '#' : l));
+    const allLetters = Array.from('ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+    allLetters.push('#');
     slider.innerHTML = '';
-    if(!letters || !letters.length){ slider.classList.add('hidden'); return; }
-    
-    letters.forEach(L => {
+
+    allLetters.forEach(L => {
         const label = document.createElement('button');
         label.type = 'button';
         label.className = 'w-7 h-7 flex items-center justify-center rounded text-sm font-bold text-gray-700 hover:bg-gray-200 transition';
         label.textContent = L;
         const safeKey = L === '#' ? 'num' : L;
+
+        // Dim letters that are not present
+        if(!present.has(L)) {
+            label.classList.add('opacity-40', 'cursor-default');
+            // keep hover from changing background for disabled
+            label.addEventListener('mouseenter', (e) => e.preventDefault());
+        }
+
         label.addEventListener('click', () => {
-            const el = document.getElementById(`alpha-${safeKey}`);
-            if(el) el.scrollIntoView({behavior:'smooth', block:'start'});
+            // If that letter has no section, try to find nearest available letter
+            if(!present.has(L)){
+                // find nearest forward, then backward
+                let target = null;
+                const order = allLetters;
+                const idx = order.indexOf(L);
+                for(let i=idx;i<order.length;i++){ if(present.has(order[i])) { target = order[i]; break; } }
+                if(!target) for(let i=idx-1;i>=0;i--){ if(present.has(order[i])) { target = order[i]; break; } }
+                if(!target) return;
+                const el = document.getElementById(`alpha-${target === '#' ? 'num' : target}`);
+                if(el) el.scrollIntoView({behavior:'smooth', block:'start'});
+            } else {
+                const el = document.getElementById(`alpha-${safeKey}`);
+                if(el) el.scrollIntoView({behavior:'smooth', block:'start'});
+            }
         });
+
         slider.appendChild(label);
     });
     slider.classList.remove('hidden');
@@ -361,11 +432,12 @@ window.switchView = function(viewName) {
         'products': 'inventorySection',
         'inventory': 'inventoryTableSection',
         'orders': 'ordersSection',
+        'contacts': 'contactsSection',
         'settings': 'settingsSection'
     };
 
     const sectionIds = Object.values(viewMappings);
-    const navIds = ['nav-analytics', 'nav-products', 'nav-orders', 'nav-inventory', 'nav-settings'];
+    const navIds = ['nav-analytics', 'nav-products', 'nav-orders', 'nav-inventory', 'nav-contacts', 'nav-settings'];
 
     // 2. Hide all sections and show the target one
     sectionIds.forEach(id => {
@@ -378,6 +450,7 @@ window.switchView = function(viewName) {
                 if (viewName === 'orders') fetchAllOrders();
                 if (viewName === 'products' || viewName === 'inventory') fetchAllProducts();
                 if (viewName === 'analytics') fetchAnalytics();
+                if (viewName === 'contacts') fetchContacts();
             } else {
                 sectionEl.classList.add('hidden');
             }
@@ -409,7 +482,8 @@ window.switchView = function(viewName) {
             'products': 'Products',
             'inventory': 'Inventory',
             'settings': 'Site Settings',
-            'orders': 'Order Management'
+            'orders': 'Order Management',
+            'contacts': 'Contacts Management'
         };
         titleEl.innerText = displayTitles[viewName] || (viewName.charAt(0).toUpperCase() + viewName.slice(1));
     }
@@ -427,6 +501,7 @@ function setupEventListeners() {
     const searchInput = document.getElementById('searchInput');
     const catSelect = document.getElementById('filterCategory');
     const trackToggle = document.getElementById('inpTrackInventory');
+    const inventorySearch = document.getElementById('inventorySearch');
 
     const runFilter = () => {
         const term = searchInput.value.toLowerCase();
@@ -445,6 +520,18 @@ function setupEventListeners() {
     if(searchInput) searchInput.addEventListener('input', debouncedRun);
     if(catSelect) catSelect.addEventListener('change', debouncedRun);
     if(trackToggle) trackToggle.addEventListener('change', toggleInventoryFields);
+    // Inventory table keyword search: filters rows so Manage button is immediately visible
+    if(inventorySearch) {
+        const invRun = debounce(() => {
+            const q = inventorySearch.value.trim().toLowerCase();
+            if(!q) return renderInventory(allProducts);
+            const results = allProducts.filter(p => {
+                return (p.title || '').toLowerCase().includes(q) || (p.brand || '').toLowerCase().includes(q) || (p.main_category || '').toLowerCase().includes(q);
+            });
+            renderInventory(results);
+        }, 150);
+        inventorySearch.addEventListener('input', invRun);
+    }
 }
 
 function populateCategories(products) {
@@ -459,7 +546,16 @@ function populateCategories(products) {
     } catch(e) { /* ignore */ }
 
     const sorted = Array.from(cats).sort((a,b)=> String(a).localeCompare(b));
-    sel.innerHTML = '<option value="">All Categories</option>' + sorted.map(c => `<option value="${c}">${c}</option>`).join('');
+    // Place 'Trending' as the very first option and make it bold
+    const lowerSorted = sorted.map(s => s.trim()).filter(Boolean);
+    const unique = Array.from(new Set(lowerSorted));
+    // Remove any existing 'Trending' occurrence (case-insensitive)
+    const remaining = unique.filter(c => c.toLowerCase() !== 'trending');
+    const optionsHtml = [];
+    optionsHtml.push(`<option value="Trending" style="font-weight:700">Trending</option>`);
+    optionsHtml.push('<option value="">All Categories</option>');
+    remaining.forEach(c => optionsHtml.push(`<option value="${c}">${c}</option>`));
+    sel.innerHTML = optionsHtml.join('');
 }
 
 // ================= PRODUCT MODAL LOGIC =================
@@ -650,109 +746,119 @@ function toggleInventoryFields() {
 
 // ================= SAVE & DELETE =================
 
-window.handleSaveProduct = async function() {
-    const btn = document.getElementById('btnSave');
-    const status = document.getElementById('saveStatus');
-    const id = document.getElementById('editProductId').value;
-    
-    btn.disabled = true;
-    btn.innerText = 'Saving...';
-    if(status) status.innerText = '';
+window.handleSaveProduct = async function(event){
+  try{
+    const saveStatus = document.getElementById('saveStatus');
+    if(saveStatus) saveStatus.textContent = 'Saving...';
 
-    try {
-        const features = Array.from(document.querySelectorAll('.inp-feature')).map(i => i.value).filter(Boolean);
-        // Gather images from the sort list (src URLs)
-        const images = Array.from(document.querySelectorAll('#imageSortList img')).map(img => img.src);
+    const titleEl = document.getElementById('inpTitle');
+    const priceEl = document.getElementById('inpPrice');
+    const originalEl = document.getElementById('inpOriginalPrice');
+    const descEl = document.getElementById('inpDesc');
+    const catEl = document.getElementById('inpCategory');
+    const brandEl = document.getElementById('inpBrand');
+    const featuresContainer = document.getElementById('featuresList');
+    const variationsContainer = document.getElementById('variationsList');
+    const trackEl = document.getElementById('inpTrackInventory');
+    const stockEl = document.getElementById('inpStockQty');
+    const autoOffEl = document.getElementById('inpAutoOff');
 
-        const payload = {
-            title: document.getElementById('inpTitle').value,
-            description: document.getElementById('inpDesc').value,
-            price: parseFloat(document.getElementById('inpPrice').value),
-            original_price: parseFloat(document.getElementById('inpOriginalPrice').value) || null,
-            main_category: document.getElementById('inpCategory').value,
-            subcategory: document.getElementById('inpSubcategory').value,
-            brand: document.getElementById('inpBrand').value,
-            features: features,
-            variants: currentVariations,
-            track_inventory: document.getElementById('inpTrackInventory').checked,
-            stock_quantity: parseInt(document.getElementById('inpStockQty').value) || 0,
-            auto_off: document.getElementById('inpAutoOff').checked,
-            images: images,
-            // Fallback for older frontend consumers
-            image_url: images.length > 0 ? images[0] : null 
-        };
-
-        let result;
-        if(id) {
-            result = await client.from('products').update(payload).eq('id', id);
-        } else {
-            result = await client.from('products').insert([payload]);
-        }
-
-        if(result.error) throw result.error;
-
-        // Update local allProducts and cache
-        if(id) {
-            // Update existing
-            const index = allProducts.findIndex(p => String(p.id) === String(id));
-            if(index !== -1) {
-                allProducts[index] = { ...allProducts[index], ...payload, updated_at: new Date().toISOString() };
-            }
-        } else {
-            // Add new
-            const newProduct = { ...payload, id: result.data[0].id, created_at: new Date().toISOString(), updated_at: new Date().toISOString() };
-            allProducts.push(newProduct);
-            allProducts.sort((a, b) => a.id - b.id);
-        }
-
-        // Update cache
-        const cacheProducts = allProducts.map(p => ({
-            id: p.id,
-            title: p.title,
-            price: p.price,
-            image_url: p.image_url,
-            main_category: p.main_category,
-            original_price: p.original_price,
-            stock_quantity: p.stock_quantity,
-            track_inventory: p.track_inventory,
-            auto_off: p.auto_off,
-            brand: p.brand,
-            subcategory: p.subcategory,
-            description: p.description,
-            features: p.features,
-            variants: p.variants,
-            created_at: p.created_at,
-            updated_at: p.updated_at
-        }));
-        localStorage.setItem('productCache', JSON.stringify(cacheProducts));
-
-        // Re-render
-        renderProducts(allProducts);
-        renderInventory(allProducts);
-        updateStats(allProducts);
-        populateCategories(allProducts);
-
-        if(status) {
-            status.innerText = 'Saved!';
-            status.className = 'text-green-600 font-bold';
-        }
-
-        setTimeout(() => {
-            closeProductModal();
-            btn.disabled = false;
-            btn.innerText = 'Save Product';
-            if(status) status.innerText = '';
-        }, 1000);
-
-    } catch(err) {
-        console.error(err);
-        if(status) {
-            status.innerText = 'Error: ' + err.message;
-            status.className = 'text-red-600 font-bold';
-        }
-        btn.disabled = false;
-        btn.innerText = 'Save Product';
+    // Basic validation
+    const title = titleEl?.value?.trim() ?? '';
+    if(!title){
+      if(saveStatus) saveStatus.textContent = 'Product title required';
+      return;
     }
+
+    const price = parseFloat(priceEl?.value) || 0;
+    const originalPrice = originalEl ? (parseFloat(originalEl.value) || null) : null;
+    const desc = descEl?.value ?? '';
+    const category = catEl?.value ?? '';
+    const brand = brandEl?.value ?? '';
+    const trackInventory = !!(trackEl && trackEl.checked);
+    const stockQty = trackInventory ? (parseInt(stockEl?.value) || 0) : null;
+    const autoOff = !!(autoOffEl && autoOffEl.checked);
+
+    // Features
+    const features = [];
+    if(featuresContainer){
+      featuresContainer.querySelectorAll('input, textarea').forEach(inp=>{
+        const v = inp.value?.trim();
+        if(v) features.push(v);
+      });
+    }
+
+    // Variations (try to collect from DOM text or data attributes)
+    const variations = [];
+    if(variationsContainer){
+      variationsContainer.querySelectorAll('[data-var-type]').forEach(node=>{
+        variations.push({
+          type: node.dataset.varType,
+          value: node.dataset.varValue,
+          priceDiff: parseFloat(node.dataset.varPrice) || 0
+        });
+      });
+      // fallback: try reading simple text nodes
+      if(variations.length === 0){
+        variationsContainer.querySelectorAll('.variation, .chip').forEach(node=>{
+          const txt = node.textContent?.trim();
+          if(txt) variations.push({label: txt});
+        });
+      }
+    }
+
+    // Images: be defensive (file input may be null)
+    const imagesInput = document.getElementById('inpImages');
+    let images = [];
+    if(imagesInput && imagesInput.files && imagesInput.files.length){
+      images = Array.from(imagesInput.files);
+    } else {
+      // fallback: check any imgs in imageSortList (could be URLs)
+      const imageSortList = document.getElementById('imageSortList');
+      if(imageSortList){
+        imageSortList.querySelectorAll('img').forEach(img=>{
+          const src = img.getAttribute('src') || img.dataset.src || img.src;
+          if(src) images.push(src);
+        });
+      }
+    }
+
+    const product = {
+      title,
+      price,
+      originalPrice,
+      description: desc,
+      category,
+      brand,
+      features,
+      variations,
+      trackInventory,
+      stockQty,
+      autoOff,
+      images
+    };
+
+    // If the project already has helper functions (uploadImages / saveProductToDB), use them.
+    let uploadedImages = images;
+    if(typeof uploadImages === 'function' && images.length){
+      // uploadImages should accept File[] and return URLs or identifiers
+      uploadedImages = await uploadImages(images);
+    }
+
+    if(typeof saveProductToDB === 'function'){
+      await saveProductToDB({...product, images: uploadedImages});
+    } else {
+      // fallback: log to console so nothing throws
+      console.log('Saving product (noop):', {...product, images: uploadedImages});
+    }
+
+    if(saveStatus) saveStatus.textContent = 'Saved';
+    if(typeof closeProductModal === 'function') closeProductModal();
+  }catch(err){
+    console.error(err);
+    const saveStatus = document.getElementById('saveStatus');
+    if(saveStatus) saveStatus.textContent = 'Error saving product';
+  }
 }
 
 window.deleteProduct = async function(id) {
@@ -1022,12 +1128,12 @@ function renderOrders(orders) {
             <td class="p-4 font-bold text-brand-orange">
                 Ksh ${o.total_amount}
             </td>
-            <td class="p-4">
+            <td class="p-4 hidden md:table-cell">
                 <span class="px-2 py-1 rounded text-xs font-bold ${o.payment_method === 'WhatsApp' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}">
                     ${o.payment_method}
                 </span>
             </td>
-            <td class="p-4 text-xs text-gray-500">
+            <td class="p-4 text-xs text-gray-500 hidden lg:table-cell">
                 ${new Date(o.created_at).toLocaleDateString()} <br>
                 ${new Date(o.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
             </td>
@@ -1162,6 +1268,22 @@ async function viewCustomer(id) {
             <p class="font-mono">${order.customer_phone}</p>
         </div>
         <div class="bg-gray-50 p-3 rounded-lg">
+            <p class="text-xs uppercase text-gray-400 font-bold">Email</p>
+            <p>${order.customer_email || 'N/A'}</p>
+        </div>
+        <div class="bg-gray-50 p-3 rounded-lg">
+            <p class="text-xs uppercase text-gray-400 font-bold">Country</p>
+            <p>${order.customer_country || 'N/A'}</p>
+        </div>
+        <div class="bg-gray-50 p-3 rounded-lg">
+            <p class="text-xs uppercase text-gray-400 font-bold">City</p>
+            <p>${order.customer_city || 'N/A'}</p>
+        </div>
+        <div class="bg-gray-50 p-3 rounded-lg">
+            <p class="text-xs uppercase text-gray-400 font-bold">Estate/Area</p>
+            <p>${order.customer_estate || 'N/A'}</p>
+        </div>
+        <div class="bg-gray-50 p-3 rounded-lg">
             <p class="text-xs uppercase text-gray-400 font-bold">Location</p>
             <p>${order.delivery_location}</p>
         </div>
@@ -1174,25 +1296,218 @@ async function viewOrderItems(id) {
     if (!order) return;
 
     const content = document.getElementById('itemsModalContent');
-    content.innerHTML = order.items.map(item => `
-        <div class="flex items-center gap-4 border-b pb-3">
-            <div class="h-12 w-12 bg-gray-100 rounded flex-shrink-0 flex items-center justify-center">📦</div>
-            <div class="flex-1">
-                <p class="font-bold text-sm text-gray-800">${item.title}</p>
-                <p class="text-xs text-gray-500">Qty: ${item.qty} × Ksh ${item.price}</p>
+    
+    // Parse items if it's a JSON string, otherwise use directly
+    let items = order.items;
+    if (typeof items === 'string') {
+        try {
+            items = JSON.parse(items);
+        } catch (e) {
+            console.error('Failed to parse items:', e);
+            items = [];
+        }
+    }
+    
+    if (!Array.isArray(items) || items.length === 0) {
+        content.innerHTML = '<p class="text-gray-500">No items in this order.</p>';
+    } else {
+        content.innerHTML = items.map(item => `
+            <div class="flex items-center gap-4 border-b pb-3">
+                <div class="h-12 w-12 bg-gray-100 rounded flex-shrink-0 flex items-center justify-center">📦</div>
+                <div class="flex-1">
+                    <p class="font-bold text-sm text-gray-800">${item.title || item.name || 'Unknown Product'}</p>
+                    <p class="text-xs text-gray-500">Qty: ${item.qty || 1} × Ksh ${item.price || 0}</p>
+                </div>
+                <div class="text-sm font-bold">Ksh ${(item.qty || 1) * (item.price || 0)}</div>
             </div>
-            <div class="text-sm font-bold">Ksh ${item.qty * item.price}</div>
-        </div>
-    `).join('') + `
-        <div class="pt-2 text-right">
-            <p class="text-sm text-gray-500">Shipping: Ksh ${order.shipping_cost}</p>
-            <p class="text-xl font-bold text-brand-orange">Total: Ksh ${order.total_amount}</p>
-        </div>
-    `;
+        `).join('') + `
+            <div class="pt-4 border-t mt-4 text-right space-y-1">
+                <p class="text-sm text-gray-500">Shipping: Ksh ${order.shipping_cost || 0}</p>
+                <p class="text-lg font-bold text-brand-orange">Total: Ksh ${order.total_amount || 0}</p>
+            </div>
+        `;
+    }
+    
     document.getElementById('itemsModal').classList.remove('hidden');
 }
 
 window.closeOrderModals = function() {
     document.getElementById('customerModal').classList.add('hidden');
     document.getElementById('itemsModal').classList.add('hidden');
+}
+
+// ================= CONTACTS MANAGEMENT =================
+async function fetchContacts() {
+    try {
+        // Fetch customers
+        const { data: customers, error: custError } = await client
+            .from('customers')
+            .select('id, name, location')
+            .order('last_order_at', { ascending: false });
+
+        if (custError) throw custError;
+
+        // Fetch community
+        const { data: community, error: commError } = await client
+            .from('community')
+            .select('name')
+            .order('id', { ascending: false });
+
+        if (commError) throw commError;
+
+        // Get emails from orders table for customers
+        const customerEmails = {};
+        if (customers && customers.length > 0) {
+            const customerIds = customers.map(c => c.id);
+            const { data: orders, error: ordersError } = await client
+                .from('orders')
+                .select('customer_id, customer_email')
+                .in('customer_id', customerIds)
+                .order('created_at', { ascending: false });
+
+            if (!ordersError && orders) {
+                // Get the most recent email for each customer
+                orders.forEach(order => {
+                    if (order.customer_id && order.customer_email && !customerEmails[order.customer_id]) {
+                        customerEmails[order.customer_id] = order.customer_email;
+                    }
+                });
+            }
+        }
+
+        // Process customers
+        const customerContacts = (customers || []).map(cust => {
+            const nameParts = (cust.name || '').trim().split(' ');
+            return {
+                firstName: nameParts[0] || '',
+                lastName: nameParts.slice(1).join(' ') || '',
+                email: customerEmails[cust.id] || '',
+                location: cust.location || '',
+                type: 'customer'
+            };
+        });
+
+        // Process community
+        const communityContacts = (community || []).map(comm => {
+            const nameParts = (comm.name || '').trim().split(' ');
+            return {
+                firstName: nameParts[0] || '',
+                lastName: nameParts.slice(1).join(' ') || '',
+                email: '',
+                location: '',
+                type: 'community'
+            };
+        });
+
+        // Combine and sort (customers first, then community)
+        const allContacts = [...customerContacts, ...communityContacts];
+        
+        // Store globally for modal access
+        allContactsData = allContacts;
+
+        // Render the table
+        renderContactsTable(allContacts);
+
+    } catch (error) {
+        console.error('Error fetching contacts:', error);
+        document.getElementById('contactsTableBody').innerHTML = `
+            <tr>
+                <td colspan="5" class="px-6 py-4 text-center text-red-500">
+                    Error loading contacts: ${error.message}
+                </td>
+            </tr>
+        `;
+    }
+}
+
+function renderContactsTable(contacts) {
+    const tbody = document.getElementById('contactsTableBody');
+    
+    if (!contacts || contacts.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="5" class="px-6 py-4 text-center text-gray-500">
+                    No contacts found
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    tbody.innerHTML = contacts.map((contact, index) => `
+        <tr class="bg-white border-b hover:bg-gray-50 cursor-pointer transition-colors" onclick="openContactModal(${index})">
+            <td class="px-6 py-4 font-medium text-gray-900">${contact.firstName}</td>
+            <td class="px-6 py-4 text-gray-700">${contact.lastName}</td>
+            <td class="px-6 py-4 text-gray-700">${contact.email || '-'}</td>
+            <td class="px-6 py-4 text-gray-700">${contact.location || '-'}</td>
+            <td class="px-6 py-4">
+                <span class="px-2 py-1 text-xs font-medium rounded-full ${
+                    contact.type === 'customer' 
+                        ? 'bg-green-100 text-green-800' 
+                        : 'bg-blue-100 text-blue-800'
+                }">
+                    ${contact.type}
+                </span>
+            </td>
+        </tr>
+    `).join('');
+}
+
+// Store contacts globally for modal access
+let allContactsData = [];
+
+function openContactModal(index) {
+    const contact = allContactsData[index];
+    if (!contact) return;
+
+    const modalContent = document.getElementById('contactModalContent');
+    modalContent.innerHTML = `
+        <div class="space-y-3">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
+                    <span class="text-lg font-bold text-gray-600">${contact.firstName.charAt(0)}${contact.lastName.charAt(0) || ''}</span>
+                </div>
+                <div>
+                    <h4 class="text-lg font-bold text-gray-800">${contact.firstName} ${contact.lastName}</h4>
+                    <span class="inline-block px-2 py-1 text-xs font-medium rounded-full ${
+                        contact.type === 'customer' 
+                            ? 'bg-green-100 text-green-800' 
+                            : 'bg-blue-100 text-blue-800'
+                    }">
+                        ${contact.type === 'customer' ? 'Customer' : 'Community Member'}
+                    </span>
+                </div>
+            </div>
+            
+            ${contact.email ? `
+                <div class="border-t pt-3">
+                    <label class="block text-sm font-medium text-gray-600 mb-1">Email</label>
+                    <p class="text-gray-800 break-words">${contact.email}</p>
+                </div>
+            ` : ''}
+            
+            ${contact.location ? `
+                <div class="border-t pt-3">
+                    <label class="block text-sm font-medium text-gray-600 mb-1">Location</label>
+                    <p class="text-gray-800">${contact.location}</p>
+                </div>
+            ` : ''}
+            
+            ${contact.type === 'customer' ? `
+                <div class="border-t pt-3">
+                    <p class="text-sm text-gray-600">This contact has made purchases and is a registered customer.</p>
+                </div>
+            ` : `
+                <div class="border-t pt-3">
+                    <p class="text-sm text-gray-600">This contact wants to join the WhatsApp community for exclusive discounts.</p>
+                </div>
+            `}
+        </div>
+    `;
+
+    document.getElementById('contactModal').classList.remove('hidden');
+}
+
+function closeContactModal() {
+    document.getElementById('contactModal').classList.add('hidden');
 }
