@@ -235,7 +235,7 @@ src="https://www.facebook.com/tr?id=1815039102579831&ev=PageView&noscript=1"
                <span class="text-sm font-semibold text-green-600 bg-green-50 px-2 py-1 rounded">(45 sold so far)</span>
           </div>
 
-          <div class="flex items-baseline gap-3 mt-1">
+          <div class="flex items-baseline gap-3 mt-1 flex-nowrap">
               <span id="pPrice" class="text-4xl font-bold text-[#ea580c]"></span>
               <span id="pOriginal" class="text-xl text-gray-400 line-through"></span>
               <span id="pDisc" class="hidden bg-red-100 text-red-600 text-xs font-bold px-2 py-1 rounded"></span>
@@ -452,7 +452,16 @@ let searchHistory = [];
     document.getElementById('pTitle').textContent = p.title;
     
     // Set Pricing
-    document.getElementById('pPrice').textContent = `Ksh ${p.price.toLocaleString()}`;
+    const priceEl = document.getElementById('pPrice');
+    priceEl.textContent = `Ksh ${p.price.toLocaleString()}`;
+    if (isFlash) {
+        priceEl.classList.remove('text-[#ea580c]');
+        priceEl.classList.add('text-orange-500');
+    } else {
+        priceEl.classList.remove('text-orange-500');
+        priceEl.classList.add('text-[#ea580c]');
+    }
+    
     if (p.original_price && p.original_price > p.price) {
         const origEl = document.getElementById('pOriginal');
         origEl.textContent = `Ksh ${p.original_price.toLocaleString()}`;
@@ -828,8 +837,10 @@ function createProductCard(p, isHorizontal = false) {
         <div class="p-4 border-t flex-1 flex flex-col justify-between">
           <div>
             <h3 class="text-sm font-bold text-gray-800 line-clamp-2 mb-2">${p.title}</h3>
-            <div class="text-xs text-gray-500 line-through">${p.original_price ? 'Ksh ' + p.original_price : ''}</div>
-            <div class="text-[#ea580c] font-bold text-lg">Ksh ${p.price}</div>
+            <div class="flex items-baseline gap-2 mt-1">
+              <div class="text-[#ea580c] font-bold text-lg">Ksh ${p.price}</div>
+              <div class="text-xs text-gray-500 line-through">${p.original_price ? 'Ksh ' + p.original_price : ''}</div>
+            </div>
           </div>
         </div>
       </a>
@@ -984,7 +995,7 @@ function renderBottomRows() {
 </script>
 
 <!-- Floating WhatsApp Button -->
-<a id="whatsappBtn" href="javascript:void(0);" onclick="openWhatsApp()" class="fixed bottom-6 right-6 z-50 w-16 h-16 bg-[#25D366] hover:bg-[#1fbb57] text-white rounded-full shadow-lg flex items-center justify-center transition-all transform hover:scale-110 hover:shadow-xl" title="Chat with us on WhatsApp" aria-label="Open WhatsApp">
+<a id="whatsappBtn" href="javascript:void(0);" onclick="openWhatsApp()" class="fixed bottom-20 right-6 z-50 w-16 h-16 bg-[#25D366] hover:bg-[#1fbb57] text-white rounded-full shadow-lg flex items-center justify-center transition-all transform hover:scale-110 hover:shadow-xl" title="Chat with us on WhatsApp" aria-label="Open WhatsApp">
     <img src="images/whatsapp.svg" alt="WhatsApp" class="w-8 h-8" />
 </a>
 

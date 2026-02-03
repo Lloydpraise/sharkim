@@ -316,7 +316,7 @@
             <div class="absolute inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity" onclick="closeOrderModals()"></div>
             <div class="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-xl shadow-2xl max-w-2xl w-full mx-4 max-h-96 overflow-y-auto">
                 <div class="sticky top-0 bg-gray-50 border-b border-gray-100 p-4 flex items-center justify-between">
-                    <h3 class="text-lg font-bold text-gray-800">Order Items</h3>
+                    <h3 class="text-lg font-bold text-gray-800">Order Details</h3>
                     <button onclick="closeOrderModals()" class="text-gray-400 hover:text-red-500 transition">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                     </button>
@@ -400,6 +400,26 @@
                     <div class="space-y-2">
                         <label class="font-bold text-gray-600">Terms & Conditions</label>
                         <textarea id="policyTerms" rows="6" class="w-full p-3 border rounded-lg bg-gray-50 focus:ring-2 focus:ring-brand-orange outline-none" placeholder="Enter plain text..."></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                <h2 class="text-xl font-bold mb-4 text-brand-dark flex items-center gap-2">
+                    <span>🔥</span> Trending Products Manager
+                </h2>
+                <div class="flex items-center gap-3 mb-6 border-b pb-6">
+                    <input type="checkbox" id="trendingActive" class="w-5 h-5 text-brand-orange rounded focus:ring-0">
+                    <label for="trendingActive" class="font-bold text-gray-700">Enable Trending Products Section</label>
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-gray-500 mb-2">Select Trending Items</label>
+                    <input type="text" id="trendingSearch" placeholder="Search products..." class="w-full p-2 border rounded mb-2" onkeyup="filterTrendingProducts()">
+                    <div class="flex gap-4 h-64">
+                        <div class="flex-1 border rounded overflow-y-auto p-2 bg-gray-50" id="trendingSourceList"></div>
+                        <div class="flex-1 border rounded overflow-y-auto p-2 bg-red-50 border-red-200" id="trendingSelectedList">
+                            <h4 class="text-xs font-bold text-red-600 uppercase mb-2">Selected Items</h4>
+                        </div>
                     </div>
                 </div>
             </div>

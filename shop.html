@@ -636,13 +636,12 @@ async function init() {
         localStorage.setItem('productMetadata', JSON.stringify(metadata));
     }
 
-    if (currentMainCategory === 'Trending') {
-        categoryProducts = await fetchTrendingProducts();
-        document.getElementById('pageTitle').innerText = 'Trending Products';
-        document.getElementById('pageSubtitle').innerText = 'Most viewed and popular items';
+    if(searchQ) {
+        document.getElementById('pageTitle').innerText = `Search: "${searchQ}"`;
+        document.getElementById('pageSubtitle').innerText = "Results matching your search";
+        categoryProducts = allProducts.filter(p => p.title.toLowerCase().includes(searchQ.toLowerCase()));
         document.getElementById('subCatsSection').style.display = 'none';
-        document.getElementById('filterTitle').innerText = 'Trending';
-    } else if(searchQ) {
+        document.getElementById('topPicksSection').style.display = 'none';
         document.getElementById('pageTitle').innerText = `Search: "${searchQ}"`;
         document.getElementById('pageSubtitle').innerText = "Results matching your search";
         categoryProducts = allProducts.filter(p => p.title.toLowerCase().includes(searchQ.toLowerCase()));
@@ -663,7 +662,7 @@ async function init() {
 
     setupPriceRangeLimits();
     renderTopPicks();
-    if(currentMainCategory && !searchQ && currentMainCategory !== 'Trending') renderSubCategoryCards();
+    if(currentMainCategory && !searchQ) renderSubCategoryCards();
     renderFilterSidebar();
     applyFilters();
 }
@@ -915,15 +914,16 @@ function renderProductCard(product) {
 
   const el = document.createElement('div');
   // Removed fixed widths here, controlled by parent container (grid or horizontal-scroll)
-  el.className = `bg-white p-4 rounded-xl shadow-sm border border-gray-100 relative flex flex-col pop-out-card h-80`;
+  el.className = `bg-white p-4 rounded-xl shadow-sm border border-gray-100 relative pop-out-card h-80`;
 
   el.innerHTML = `
-    <a href="product.html?id=${encodeURIComponent(product.id)}" class="block mb-3 relative aspect-[4/5] overflow-hidden rounded-lg flex items-center justify-center p-2 bg-white">
-    <img src="${product.image_url}" data-product-id="${product.id}" onerror="handleMissingImage(this, '${product.id}')" class="w-full h-full object-contain hover:scale-105 transition duration-300" loading="lazy" alt="${product.title}">
-      ${disc ? `<span class="discount-badge absolute top-0 left-0 text-[10px] font-bold">-${disc}%</span>` : ''}
-    </a>
+    <a href="product.html?id=${encodeURIComponent(product.id)}" class="block flex flex-col h-full">
+      <div class="block mb-3 relative aspect-[4/5] overflow-hidden rounded-lg flex items-center justify-center p-2 bg-white">
+        <img src="${product.image_url}" data-product-id="${product.id}" onerror="handleMissingImage(this, '${product.id}')" class="w-full h-full object-contain hover:scale-105 transition duration-300" loading="lazy" alt="${product.title}">
+        ${disc ? `<span class="discount-badge absolute top-0 left-0 text-[10px] font-bold">-${disc}%</span>` : ''}
+      </div>
 
-    <div class="flex-1 flex flex-col">
+      <div class="flex-1 flex flex-col">
         <h3 class="text-sm font-bold text-gray-800 line-clamp-1 leading-tight mb-1 overflow-hidden text-ellipsis whitespace-nowrap">${product.title}</h3>
         <div class="mb-2 product-price-row">
           ${product.original_price ? `<span class="text-xs text-gray-400 line-through mr-1">Ksh ${product.original_price}</span>` : ''}
@@ -931,15 +931,16 @@ function renderProductCard(product) {
         </div>
 
         <div class="mt-auto flex flex-col gap-2">
-            <button onclick="addToCart('${product.id}')" class="w-full py-1.5 border border-gray-200 bg-white text-gray-800 text-xs font-bold rounded hover:bg-gray-50 hover:text-[#ea580c] transition">
-                ADD TO CART
-            </button>
+          <button onclick="event.stopPropagation(); addToCart('${product.id}')" class="w-full py-1.5 border border-gray-200 bg-white text-gray-800 text-xs font-bold rounded hover:bg-gray-50 hover:text-[#ea580c] transition">
+            ADD TO CART
+          </button>
 
-            <button onclick="buyNowSilent('${product.id}')" class="w-full py-1.5 bg-[#ea580c] text-white text-xs font-bold rounded text-center hover:bg-orange-700 transition">
-              BUY NOW
-            </button>
+          <button onclick="event.stopPropagation(); buyNowSilent('${product.id}')" class="w-full py-1.5 bg-[#ea580c] text-white text-xs font-bold rounded text-center hover:bg-orange-700 transition">
+            BUY NOW
+          </button>
         </div>
-    </div>
+      </div>
+    </a>
   `;
   return el;
 }

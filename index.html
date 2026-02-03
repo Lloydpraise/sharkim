@@ -108,6 +108,15 @@ src="https://www.facebook.com/tr?id=1815039102579831&ev=PageView&noscript=1"
     /* Read-more link style for About section */
     .read-more-btn { color: #ac8334; text-decoration: none; }
 
+    /* Hide scrollbar for horizontal scrolling */
+    .scrollbar-hide {
+      -ms-overflow-style: none;  /* Internet Explorer 10+ */
+      scrollbar-width: none;  /* Firefox */
+    }
+    .scrollbar-hide::-webkit-scrollbar {
+      display: none;  /* Safari and Chrome */
+    }
+
     /* Hero Carousel */
     .carousel-container { position: relative; overflow: hidden; height: 28rem; }
     .carousel-slide { position: absolute; inset: 0; transition: opacity 1s ease-in-out; opacity: 0; }
@@ -145,25 +154,51 @@ src="https://www.facebook.com/tr?id=1815039102579831&ev=PageView&noscript=1"
       .horizontal-scroll > * { flex: auto; }
     }
 
-    /* Desktop categories sidebar should match hero height and scroll internally */
-    #desktopCategories { max-height: 28rem; overflow-y: auto; }
-
-    /* Browse by category: two-row horizontal scroll on mobile, grid on desktop */
-    .two-row-scroll {
-      display: grid;
-      grid-template-rows: repeat(2, auto);
-      grid-auto-flow: column;
-      grid-auto-columns: 45%;
-      gap: 1rem;
+    /* Horizontal scroll for categories on both mobile and desktop */
+    .horizontal-scroll-categories {
+      display: flex;
       overflow-x: auto;
       scroll-snap-type: x mandatory;
       -webkit-overflow-scrolling: touch;
+      gap: 1rem;
       padding-bottom: 1rem;
     }
-    .two-row-scroll > * { scroll-snap-align: start; }
+    .horizontal-scroll-categories > * {
+      scroll-snap-align: start;
+      flex: 0 0 45%; /* show 2 cards on mobile */
+    }
     @media (min-width: 768px) {
-      .two-row-scroll { display: grid; grid-template-columns: repeat(6, 1fr); grid-auto-flow: row; grid-auto-columns: auto; overflow-x: visible; }
-      .two-row-scroll > * { scroll-snap-align: none; }
+      .horizontal-scroll-categories {
+        gap: 1.5rem;
+      }
+      .horizontal-scroll-categories > * {
+        flex: 0 0 200px; /* fixed width on desktop */
+      }
+    }
+
+    /* Desktop categories sidebar should match hero height and scroll internally */
+    #desktopCategories { max-height: 28rem; overflow-y: auto; }
+
+    /* Browse by category: horizontal scroll on both mobile and desktop */
+    .two-row-scroll {
+      display: flex;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+      gap: 1rem;
+      padding-bottom: 1rem;
+    }
+    .two-row-scroll > * {
+      scroll-snap-align: start;
+      flex: 0 0 40%; /* show more categories on mobile */
+    }
+    @media (min-width: 768px) {
+      .two-row-scroll {
+        gap: 1.5rem;
+      }
+      .two-row-scroll > * {
+        flex: 0 0 120px; /* smaller fixed width on desktop for more categories */
+      }
     }
 
     /* Independent horizontal rows (You May Also Like) on mobile */
@@ -304,9 +339,26 @@ src="https://www.facebook.com/tr?id=1815039102579831&ev=PageView&noscript=1"
 
     <section>
         <h2 class="text-2xl font-bold text-center mb-6 text-gray-800"><span class="title-underline">Top Categories</span></h2>
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4" id="topCategoriesContainer">
+        <div class="horizontal-scroll-categories" id="topCategoriesContainer">
             </div>
     </section>
+
+    <section id="trendingSection" class="hidden bg-white rounded-xl p-4 md:p-6 shadow-sm border border-gray-100 mb-8">
+    <div class="flex items-center gap-2 mb-6 border-b pb-4">
+        <h2 class="text-2xl md:text-3xl font-extrabold italic text-gray-800">
+            <span class="text-red-500">🔥 TRENDING</span> PRODUCTS
+        </h2>
+    </div>
+
+    <div class="overflow-x-auto scrollbar-hide" id="trendingItemsContainer">
+        <div class="flex gap-4" id="trendingRow">
+            <div class="animate-pulse bg-gray-100 h-80 w-48 md:w-56 rounded-lg flex-shrink-0"></div>
+            <div class="animate-pulse bg-gray-100 h-80 w-48 md:w-56 rounded-lg flex-shrink-0"></div>
+            <div class="animate-pulse bg-gray-100 h-80 w-48 md:w-56 rounded-lg flex-shrink-0"></div>
+            <div class="animate-pulse bg-gray-100 h-80 w-48 md:w-56 rounded-lg flex-shrink-0"></div>
+        </div>
+    </div>
+</section>
 
     <section id="flashSaleSection" class="hidden bg-white rounded-xl p-4 md:p-6 shadow-sm border border-gray-100 mb-8">
     <div class="flex flex-col md:flex-row items-center justify-between mb-6 border-b pb-4">
@@ -328,11 +380,13 @@ src="https://www.facebook.com/tr?id=1815039102579831&ev=PageView&noscript=1"
         </div>
     </div>
 
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4" id="flashItemsContainer">
-        <div class="animate-pulse bg-gray-100 h-48 rounded-lg"></div>
-        <div class="animate-pulse bg-gray-100 h-48 rounded-lg"></div>
-        <div class="animate-pulse bg-gray-100 h-48 rounded-lg hidden md:block"></div>
-        <div class="animate-pulse bg-gray-100 h-48 rounded-lg hidden md:block"></div>
+    <div class="overflow-x-auto scrollbar-hide" id="flashItemsContainer">
+        <div class="flex gap-4" id="flashRow">
+            <div class="animate-pulse bg-gray-100 h-80 w-48 md:w-56 rounded-lg flex-shrink-0"></div>
+            <div class="animate-pulse bg-gray-100 h-80 w-48 md:w-56 rounded-lg flex-shrink-0"></div>
+            <div class="animate-pulse bg-gray-100 h-80 w-48 md:w-56 rounded-lg flex-shrink-0"></div>
+            <div class="animate-pulse bg-gray-100 h-80 w-48 md:w-56 rounded-lg flex-shrink-0"></div>
+        </div>
     </div>
 </section>
 

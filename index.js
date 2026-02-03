@@ -202,7 +202,7 @@ function distributeTopSections(products) {
     };
 
     // TOP CATEGORIES (Square Cards)
-    const topCats = (window.MAIN_CATEGORIES || []).slice(0, 4);
+    const topCats = (window.MAIN_CATEGORIES || []);
     topCats.forEach(cat => {
         const prod = getVisualLeader(cat);
         const img = prod ? getSafeImageUrl(prod) : 'images/sharkim_gold_logo.png';
@@ -224,7 +224,7 @@ function distributeTopSections(products) {
     });
 
     // ROUND CATEGORIES
-    const roundCats = (window.MAIN_CATEGORIES || []).slice(0, 6);
+    const roundCats = (window.MAIN_CATEGORIES || []);
     roundCats.forEach(cat => {
         const prod = getVisualLeader(cat);
         const img = prod ? getSafeImageUrl(prod) : 'images/sharkim_gold_logo.png';
@@ -682,7 +682,37 @@ async function loadSiteContent() {
         }
     }
 
-    // 2. RENDER FLASH SALE
+    // 2. RENDER TRENDING PRODUCTS
+    const trendingSection = document.getElementById('trendingSection');
+    if (trendingSection) {
+        try {
+            // Support both JSON-string and object storage for `trending_products`
+            let trendingCfg = settings.policies?.trending_products;
+            if (typeof trendingCfg === 'string') {
+                try { trendingCfg = JSON.parse(trendingCfg); } catch (e) { trendingCfg = {}; }
+            }
+
+            if (trendingCfg && trendingCfg.active) {
+                const { product_ids } = trendingCfg;
+
+                if (Array.isArray(product_ids) && product_ids.length > 0) {
+                    trendingSection.classList.remove('hidden');
+
+                    // Fetch Trending Products
+                    const { data: products } = await client.from('products').select('*').in('id', product_ids || []);
+                    if (products) renderTrendingItems(products);
+                } else {
+                    trendingSection.classList.add('hidden');
+                }
+            } else {
+                trendingSection.classList.add('hidden');
+            }
+        } catch (e) {
+            trendingSection.classList.add('hidden');
+        }
+    }
+
+    // 3. RENDER FLASH SALE
     const flashSection = document.getElementById('flashSaleSection');
     if (flashSection) {
         try {
@@ -763,13 +793,23 @@ function startFlashTimer(endTime) {
 }
 // Helper: Render Flash Items
 function renderFlashItems(products) {
-    const container = document.getElementById('flashItemsContainer'); // Add this ID to your flash sale grid in index.html
-    if(!container) return;
-    container.innerHTML = products.map(p => {
+    // Randomize the products array
+    const shuffledProducts = [...products].sort(() => Math.random() - 0.5);
+
+    const container = document.getElementById('flashItemsContainer');
+    const row = document.getElementById('flashRow');
+
+    if(!container || !row) return;
+
+    // Clear existing content
+    row.innerHTML = '';
+
+    // Create item HTML function
+    const createItemHTML = (p) => {
         const disc = (p.original_price && p.original_price > p.price)
             ? Math.round(((p.original_price - p.price)/p.original_price)*100) : 0;
         return `
-        <div class="pop-out-card bg-white p-3 rounded-lg shadow border border-orange-100 relative flex flex-col h-80">
+        <div class="pop-out-card bg-white p-3 rounded-lg shadow border border-orange-100 relative flex flex-col h-80 flex-shrink-0 w-48 md:w-56">
             <a href="product.html?id=${encodeURIComponent(p.id)}" class="block mb-3 relative aspect-[4/5] overflow-hidden rounded-lg flex items-center justify-center p-2 bg-white">
                 <img src="${p.images?.[0] || p.image_url}" class="w-full h-full object-contain hover:scale-105 transition duration-300" loading="lazy" alt="${p.title}">
                 ${disc ? `<span class="absolute top-0 right-0 bg-orange-500 text-white text-[20px] font-bold px-2 py-1 rounded">-${disc}%</span>` : ''}
@@ -791,7 +831,57 @@ function renderFlashItems(products) {
             </div>
         </div>
         `;
-    }).join('');
+    };
+
+    // Add all shuffled products to the single row
+    shuffledProducts.forEach(product => {
+        row.innerHTML += createItemHTML(product);
+    });
+}
+
+// Helper: Render Trending Items
+function renderTrendingItems(products) {
+    const container = document.getElementById('trendingItemsContainer');
+    const row = document.getElementById('trendingRow');
+
+    if(!container || !row) return;
+
+    // Clear existing content
+    row.innerHTML = '';
+
+    // Create item HTML function
+    const createItemHTML = (p) => {
+        const disc = (p.original_price && p.original_price > p.price)
+            ? Math.round(((p.original_price - p.price)/p.original_price)*100) : 0;
+        return `
+        <div class="pop-out-card bg-white p-3 rounded-lg shadow border border-red-100 relative flex flex-col h-80 flex-shrink-0 w-48 md:w-56">
+            <a href="product.html?id=${encodeURIComponent(p.id)}" class="block mb-3 relative aspect-[4/5] overflow-hidden rounded-lg flex items-center justify-center p-2 bg-white">
+                <img src="${p.images?.[0] || p.image_url}" class="w-full h-full object-contain hover:scale-105 transition duration-300" loading="lazy" alt="${p.title}">
+                ${disc ? `<span class="absolute top-0 right-0 bg-red-500 text-white text-[20px] font-bold px-2 py-1 rounded">-${disc}%</span>` : ''}
+            </a>
+            <div class="flex-1 flex flex-col">
+                <h3 class="text-sm font-bold text-gray-800 line-clamp-1 leading-tight mb-1 overflow-hidden text-ellipsis whitespace-nowrap">${p.title}</h3>
+                <div class="mb-2">
+                    ${p.original_price ? `<span class="text-xs text-gray-400 line-through mr-1">Ksh ${p.original_price}</span>` : ''}
+                    <span class="text-base font-bold text-red-500">Ksh ${p.price}</span>
+                </div>
+                <div class="mt-auto flex flex-col gap-2">
+                    <button onclick="addToCart('${p.id}')" class="w-full py-1.5 border border-gray-200 bg-white text-gray-800 text-xs font-bold rounded hover:bg-gray-50 hover:text-red-500 transition">
+                        ADD TO CART
+                    </button>
+                    <button onclick="buyNowSilent('${p.id}')" class="w-full py-1.5 bg-red-500 text-white text-xs font-bold rounded text-center hover:bg-red-700 transition">
+                        BUY NOW
+                    </button>
+                </div>
+            </div>
+        </div>
+        `;
+    };
+
+    // Add products to the row (no shuffling for trending)
+    products.forEach(product => {
+        row.innerHTML += createItemHTML(product);
+    });
 }
 
 // Helper: Simple Slider Reset

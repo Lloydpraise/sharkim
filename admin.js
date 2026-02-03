@@ -546,15 +546,11 @@ function populateCategories(products) {
     } catch(e) { /* ignore */ }
 
     const sorted = Array.from(cats).sort((a,b)=> String(a).localeCompare(b));
-    // Place 'Trending' as the very first option and make it bold
     const lowerSorted = sorted.map(s => s.trim()).filter(Boolean);
     const unique = Array.from(new Set(lowerSorted));
-    // Remove any existing 'Trending' occurrence (case-insensitive)
-    const remaining = unique.filter(c => c.toLowerCase() !== 'trending');
     const optionsHtml = [];
-    optionsHtml.push(`<option value="Trending" style="font-weight:700">Trending</option>`);
     optionsHtml.push('<option value="">All Categories</option>');
-    remaining.forEach(c => optionsHtml.push(`<option value="${c}">${c}</option>`));
+    unique.forEach(c => optionsHtml.push(`<option value="${c}">${c}</option>`));
     sel.innerHTML = optionsHtml.join('');
 }
 
@@ -904,6 +900,7 @@ function populateModalCategoryOptions() {
 
 let currentSettings = { banners: [], policies: {}, flash_sale: {} };
 let flashSelectedIds = [];
+let trendingSelectedIds = [];
 
 async function loadSiteSettings() {
     const { data, error } = await client.from('site_settings').select('*').single();
@@ -925,7 +922,13 @@ async function loadSiteSettings() {
     document.getElementById('flashActive').checked = !!flash.active;
     flashSelectedIds = flash.product_ids || [];
     
+    // 4. Populate Trending Products
+    const trending = data.policies?.trending_products || {};
+    document.getElementById('trendingActive').checked = !!trending.active;
+    trendingSelectedIds = trending.product_ids || [];
+    
     renderFlashProductLists();
+    renderTrendingProductLists();
 }
 
 function renderBannerInputs() {
@@ -1008,6 +1011,43 @@ window.removeFlashItem = function(id) {
 
 window.filterFlashProducts = function() { renderFlashProductLists(); }
 
+// Trending Products Selection Logic
+function renderTrendingProductLists() {
+    const sourceList = document.getElementById('trendingSourceList');
+    const selectedList = document.getElementById('trendingSelectedList');
+    const search = document.getElementById('trendingSearch').value.toLowerCase();
+
+    sourceList.innerHTML = '';
+    selectedList.innerHTML = '';
+
+    // Filter products excluding already selected ones
+    const available = allProducts.filter(p => !trendingSelectedIds.includes(p.id) && (p.title.toLowerCase().includes(search))).sort((a,b) => a.title.localeCompare(b.title));
+
+    available.forEach(p => {
+        const div = document.createElement('div');
+        div.className = "flex items-center justify-between p-2 hover:bg-white border-b border-gray-100 text-sm cursor-pointer";
+        div.innerHTML = `<span class="truncate w-4/5">${p.title}</span> <span class="text-green-600 font-bold">+</span>`;
+        div.onclick = () => { trendingSelectedIds.push(p.id); renderTrendingProductLists(); };
+        sourceList.appendChild(div);
+    });
+
+    trendingSelectedIds.forEach(id => {
+        const p = allProducts.find(x => x.id === id);
+        if(!p) return;
+        const div = document.createElement('div');
+        div.className = "flex items-center justify-between p-2 bg-white border-b border-red-100 text-sm";
+        div.innerHTML = `<span class="truncate w-4/5 font-medium">${p.title}</span> <span class="text-red-500 cursor-pointer font-bold" onclick="removeTrendingItem('${id}')">×</span>`;
+        selectedList.appendChild(div);
+    });
+}
+
+window.removeTrendingItem = function(id) {
+    trendingSelectedIds = trendingSelectedIds.filter(x => x != id); // loose comparison for string/int safety
+    renderTrendingProductLists();
+}
+
+window.filterTrendingProducts = function() { renderTrendingProductLists(); }
+
 // Helper to convert plain text from admin into the styled HTML your site uses
 function formatPolicyToHTML(text) {
     if (!text) return "";
@@ -1057,7 +1097,13 @@ window.saveSiteSettings = async function() {
     // 3. Prepare Update Data
     const updateData = {
         banners: finalBanners,
-        policies: formattedPolicies,
+        policies: {
+            ...formattedPolicies,
+            trending_products: {
+                active: document.getElementById('trendingActive').checked,
+                product_ids: trendingSelectedIds
+            }
+        },
         flash_sale: {
             active: document.getElementById('flashActive').checked,
             end_time: document.getElementById('flashEndTime').value,
@@ -1145,7 +1191,7 @@ function renderOrders(orders) {
                 </select>
             </td>
             <td class="p-4">
-                <button onclick="viewOrderItems('${o.id}')" class="bg-gray-800 text-white px-3 py-1 rounded-lg text-xs">View Items</button>
+                <button onclick="viewOrderDetails('${o.id}')" class="bg-gray-800 text-white px-3 py-1 rounded-lg text-xs">Order Details</button>
             </td>
         </tr>
     `).join('');
@@ -1291,7 +1337,7 @@ async function viewCustomer(id) {
     document.getElementById('customerModal').classList.remove('hidden');
 }
 
-async function viewOrderItems(id) {
+async function viewOrderDetails(id) {
     const order = allFetchedOrders.find(o => o.id == id);
     if (!order) return;
 
@@ -1308,22 +1354,62 @@ async function viewOrderItems(id) {
         }
     }
     
+    // Calculate subtotal
+    const subtotal = Array.isArray(items) ? items.reduce((sum, item) => sum + ((item.qty || 1) * (item.price || 0)), 0) : 0;
+    const shippingCost = order.shipping_cost || 0;
+    const totalAmount = order.total_amount || 0;
+    
     if (!Array.isArray(items) || items.length === 0) {
         content.innerHTML = '<p class="text-gray-500">No items in this order.</p>';
     } else {
-        content.innerHTML = items.map(item => `
-            <div class="flex items-center gap-4 border-b pb-3">
-                <div class="h-12 w-12 bg-gray-100 rounded flex-shrink-0 flex items-center justify-center">📦</div>
-                <div class="flex-1">
-                    <p class="font-bold text-sm text-gray-800">${item.title || item.name || 'Unknown Product'}</p>
-                    <p class="text-xs text-gray-500">Qty: ${item.qty || 1} × Ksh ${item.price || 0}</p>
+        content.innerHTML = `
+            <div class="space-y-4">
+                <!-- Customer Information -->
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <h4 class="font-bold text-gray-800 mb-3">Customer Information</h4>
+                    <div class="grid grid-cols-1 gap-2 text-sm">
+                        <div><span class="font-medium">Name:</span> ${order.customer_name || 'N/A'}</div>
+                        <div><span class="font-medium">Phone:</span> ${order.customer_phone || 'N/A'}</div>
+                        <div><span class="font-medium">Email:</span> ${order.customer_email || 'N/A'}</div>
+                        <div><span class="font-medium">Address:</span> ${order.delivery_location || 'N/A'}</div>
+                    </div>
                 </div>
-                <div class="text-sm font-bold">Ksh ${(item.qty || 1) * (item.price || 0)}</div>
-            </div>
-        `).join('') + `
-            <div class="pt-4 border-t mt-4 text-right space-y-1">
-                <p class="text-sm text-gray-500">Shipping: Ksh ${order.shipping_cost || 0}</p>
-                <p class="text-lg font-bold text-brand-orange">Total: Ksh ${order.total_amount || 0}</p>
+                
+                <!-- Order Items -->
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <h4 class="font-bold text-gray-800 mb-3">Order Items</h4>
+                    <div class="space-y-3">
+                        ${items.map(item => `
+                            <div class="flex items-center gap-4 border-b pb-3 last:border-b-0">
+                                <div class="h-12 w-12 bg-gray-100 rounded flex-shrink-0 flex items-center justify-center">📦</div>
+                                <div class="flex-1">
+                                    <p class="font-bold text-sm text-gray-800">${item.title || item.name || 'Unknown Product'}</p>
+                                    <p class="text-xs text-gray-500">Qty: ${item.qty || 1} × Ksh ${item.price || 0}</p>
+                                </div>
+                                <div class="text-sm font-bold">Ksh ${((item.qty || 1) * (item.price || 0)).toLocaleString()}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+                
+                <!-- Order Summary -->
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <h4 class="font-bold text-gray-800 mb-3">Order Summary</h4>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between">
+                            <span>Subtotal:</span>
+                            <span>Ksh ${subtotal.toLocaleString()}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Shipping (${order.shipping_method || 'Standard'}):</span>
+                            <span>Ksh ${shippingCost.toLocaleString()}</span>
+                        </div>
+                        <div class="flex justify-between font-bold text-lg border-t pt-2">
+                            <span>Total:</span>
+                            <span class="text-brand-orange">Ksh ${totalAmount.toLocaleString()}</span>
+                        </div>
+                    </div>
+                </div>
             </div>
         `;
     }

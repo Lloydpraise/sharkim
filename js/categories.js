@@ -6,7 +6,7 @@
 
 (function(){
   const CATEGORIES = {
-    "Trending": [],
+    // "Trending": [], // Removed - now handled as curated selection
 
     "Electronics": [
       "Accessories and Supplies for Electronics (chargers, earphones, cases)",
